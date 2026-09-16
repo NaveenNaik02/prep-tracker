@@ -16,13 +16,17 @@ export interface PriorityMixQuestion {
   lang?: string | null;
   tags?: string | null;
   problem?: string | null;
+  problemHtml?: string | null;
+  prerequisites?: string | null;
+  code?: string | null;
+  output?: string | null;
   priority: PriorityLevel | null;
   starred: boolean;
   greyZone: boolean;
 }
 
 const PRIORITY_COLUMNS =
-  'id, number, title, body_html, markdown, created_by, topic, file, label, group_slug, lang, tags, problem, priority, starred, grey_zone';
+  'id, number, title, body_html, markdown, created_by, topic, file, label, group_slug, lang, tags, problem, problem_html, prerequisites, code, output, priority, starred, grey_zone';
 
 function mapRow(r: Record<string, unknown>): PriorityMixQuestion {
   return {
@@ -39,6 +43,10 @@ function mapRow(r: Record<string, unknown>): PriorityMixQuestion {
     lang: r.lang as string | null,
     tags: r.tags as string | null,
     problem: r.problem as string | null,
+    problemHtml: r.problem_html as string | null,
+    prerequisites: r.prerequisites as string | null,
+    code: r.code as string | null,
+    output: r.output as string | null,
     priority: r.priority as PriorityLevel | null,
     starred: r.starred as boolean,
     greyZone: r.grey_zone as boolean,

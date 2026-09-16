@@ -30,7 +30,10 @@ export const SidebarTopicGroup = ({ group, expanded, onToggle }: Props) => {
     <div className="topic-group">
       <button className="topic-row" aria-expanded={expanded} onClick={onToggle}>
         <Icon.Chevron />
-        <span className="topic-name">{group.groupName}</span>
+        <span className="topic-name">
+          {group.groupName}
+          {group.isDsa && <span className="dsa-badge">DSA</span>}
+        </span>
         <span className="topic-progress">
           {done}/{total}
         </span>

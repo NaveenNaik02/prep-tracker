@@ -14,7 +14,7 @@ export interface InstructionPreset {
   name: string
   text: string
   protected?: boolean
-  kind?: 'text' | 'code' | 'suggestion' | 'problem' | 'code-explanation'
+  kind?: 'text' | 'code' | 'suggestion' | 'problem' | 'code-explanation' | 'description'
 }
 
 const PRESETS_KEY = 'prep-tracker:ai-instruction-presets'
@@ -24,6 +24,7 @@ const DEFAULT_TEXT_PRESET_ID = 'default-text'
 const DEFAULT_CODE_PRESET_ID = 'default-code'
 const DEFAULT_SUGGESTION_PRESET_ID = 'default-suggestion'
 const DEFAULT_PROBLEM_PRESET_ID = 'default-problem'
+const DEFAULT_DESCRIPTION_PRESET_ID = 'default-description'
 const DEFAULT_CODE_EXPLANATION_PRESET_ID = 'default-code-explanation'
 
 const DEFAULT_TEXT_INSTRUCTIONS = [
@@ -44,6 +45,12 @@ const DEFAULT_SUGGESTION_INSTRUCTIONS = 'If a draft question is already provided
 
 const DEFAULT_PROBLEM_INSTRUCTIONS = "Keep it to 1-3 sentences of plain prose, name the function/signature if relevant, and don't restate the question verbatim."
 
+// Governs Format on a DSA question's Description. Deliberately separate from
+// the 'problem' preset above: that one generates a terse 1-3 sentence problem
+// statement, which when fed to Format told the model to compress away the
+// author's worked examples.
+const DEFAULT_DESCRIPTION_INSTRUCTIONS = 'Format identifiers, parameters and literal values as `inline code`, and put each worked example in its own fenced block. Keep the examples exactly as written.'
+
 // Governs the code-output subtopic's "Generate" on the Explanation field.
 // Kept here rather than hardcoded in generateCodeOutput.ts so editing it in
 // Settings actually changes what the model is told.
@@ -55,6 +62,7 @@ export const DEFAULT_PRESETS: InstructionPreset[] = [
   { id: DEFAULT_SUGGESTION_PRESET_ID, name: 'Question suggestion', text: DEFAULT_SUGGESTION_INSTRUCTIONS, protected: true, kind: 'suggestion' },
   { id: DEFAULT_PROBLEM_PRESET_ID, name: 'Implementation problem statement', text: DEFAULT_PROBLEM_INSTRUCTIONS, protected: true, kind: 'problem' },
   { id: DEFAULT_CODE_EXPLANATION_PRESET_ID, name: 'Code output explanation', text: DEFAULT_CODE_EXPLANATION_INSTRUCTIONS, protected: true, kind: 'code-explanation' },
+  { id: DEFAULT_DESCRIPTION_PRESET_ID, name: 'DSA problem description', text: DEFAULT_DESCRIPTION_INSTRUCTIONS, protected: true, kind: 'description' },
 ]
 
 export function presetUid(): string {
@@ -66,21 +74,22 @@ export function presetUid(): string {
 // and backfills a default's text if it was ever saved blank. Safe to call on
 // an already-migrated list (no-op).
 export function migratePresets(list: InstructionPreset[]): InstructionPreset[] {
+  // Derived from DEFAULT_PRESETS rather than a check per preset: the old
+  // hand-written ladder silently skipped any preset added after it was written.
   let next = list
-  const hasText = next.some(p => p.id === DEFAULT_TEXT_PRESET_ID)
-  const hasCode = next.some(p => p.id === DEFAULT_CODE_PRESET_ID)
-  const hasSuggestion = next.some(p => p.id === DEFAULT_SUGGESTION_PRESET_ID)
-  const hasProblem = next.some(p => p.id === DEFAULT_PROBLEM_PRESET_ID)
-  const hasCodeExplanation = next.some(p => p.id === DEFAULT_CODE_EXPLANATION_PRESET_ID)
-  if (!hasText) next = [DEFAULT_PRESETS[0], ...next]
-  if (!hasCode) next = [...next, DEFAULT_PRESETS[1]]
-  if (!hasSuggestion) next = [...next, DEFAULT_PRESETS[2]]
-  if (!hasProblem) next = [...next, DEFAULT_PRESETS[3]]
-  if (!hasCodeExplanation) next = [...next, DEFAULT_PRESETS[4]]
-  next = next.map(p => (p.id === DEFAULT_CODE_PRESET_ID && !p.text.trim() ? { ...p, text: DEFAULT_CODE_INSTRUCTIONS } : p))
-  next = next.map(p => (p.id === DEFAULT_SUGGESTION_PRESET_ID && !p.text.trim() ? { ...p, text: DEFAULT_SUGGESTION_INSTRUCTIONS } : p))
-  next = next.map(p => (p.id === DEFAULT_PROBLEM_PRESET_ID && !p.text.trim() ? { ...p, text: DEFAULT_PROBLEM_INSTRUCTIONS } : p))
-  next = next.map(p => (p.id === DEFAULT_CODE_EXPLANATION_PRESET_ID && !p.text.trim() ? { ...p, text: DEFAULT_CODE_EXPLANATION_INSTRUCTIONS } : p))
+  for (const preset of DEFAULT_PRESETS) {
+    const existing = next.find(p => p.id === preset.id)
+    if (!existing) {
+      // The text preset has always led the list; the rest append.
+      next = preset.id === DEFAULT_TEXT_PRESET_ID ? [preset, ...next] : [...next, preset]
+      continue
+    }
+    // An emptied protected preset is restored — except the text one, where a
+    // blank means "no extra instructions" and is the author's choice.
+    if (preset.id !== DEFAULT_TEXT_PRESET_ID && !existing.text.trim()) {
+      next = next.map(p => (p.id === preset.id ? { ...p, text: preset.text } : p))
+    }
+  }
   return next
 }
 
@@ -133,4 +142,8 @@ export function getProblemInstructionText(): string {
 
 export function getCodeExplanationInstructionText(): string {
   return loadPresets().find(p => p.kind === 'code-explanation')?.text || ''
+}
+
+export function getDescriptionInstructionText(): string {
+  return loadPresets().find(p => p.kind === 'description')?.text || ''
 }

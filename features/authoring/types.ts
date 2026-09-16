@@ -113,6 +113,25 @@ export interface EditingCodeQuestion {
   priority: PriorityLevel | null;
 }
 
+export interface EditingDsaQuestion extends EditingCodeQuestion {
+  problem: string;
+  prerequisites: string | null;
+}
+
+// Exactly one of `section` / `groupSlug` is supplied.
+export interface DsaQuestionModalProps {
+  // A fixed destination — a section page, or any edit. Shown as a static line.
+  section?: SectionMeta;
+  // The topic to file into, when the destination isn't decided yet (the topic
+  // overview). The form then picks among that topic's DSA subtopics, or names
+  // a new one via Suggest — a DSA topic with no subtopics yet is the normal
+  // starting state, so the modal has to be able to create the first one.
+  groupSlug?: string;
+  editing?: EditingDsaQuestion;
+  onClose: () => void;
+  onSaved: (question: ParsedQuestion, section: SectionMeta) => void;
+}
+
 export interface CodeQuestionModalProps {
   // Always the code-output subtopic the modal was opened from — there's no
   // topic/subtopic picker, so this is the only placement it can write to.
@@ -141,7 +160,7 @@ export const PRIORITY_OPTIONS: { level: PriorityLevel; label: string }[] = [
   { level: 'low', label: 'Low' },
 ];
 
-export const LANG_OPTIONS = ['js', 'jsx', 'ts', 'html', 'css', 'bash', 'none'];
+export const LANG_OPTIONS = ['js', 'jsx', 'ts', 'python', 'html', 'css', 'bash', 'none'];
 
 // Sentinel select values for a suggested topic/subtopic that doesn't exist
 // yet — nothing is created in the database until Save, so these stand in

@@ -7,8 +7,11 @@ import { Code2 } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
 import { useAppStore } from '@/lib/stores/appStore';
 import QuestionItem, {
+  DifficultyPill,
+  PrereqTags,
   QuestionAnswerBody,
   StarButton,
+  splitList,
   stripHtml,
 } from '@/components/QuestionItem';
 import RowActions from '@/components/RowActions';
@@ -25,6 +28,7 @@ import type { ParsedQuestion } from '@/lib/content/parser';
 import type { PriorityLevel } from '@/lib/types';
 import type {
   EditingCodeQuestion,
+  EditingDsaQuestion,
   EditingQuestion,
 } from '@/features/authoring';
 import { useSectionDrag } from '../hooks';
@@ -38,6 +42,12 @@ const EditQuestionModal = dynamic(
 );
 const CodeQuestionModal = dynamic(
   () => import('@/features/authoring').then((m) => m.CodeQuestionModal),
+  {
+    ssr: false,
+  },
+);
+const DsaQuestionModal = dynamic(
+  () => import('@/features/authoring').then((m) => m.DsaQuestionModal),
   {
     ssr: false,
   },
@@ -80,6 +90,7 @@ export default function QuestionList({
   const [editingCode, setEditingCode] = useState<EditingCodeQuestion | null>(
     null,
   );
+  const [editingDsa, setEditingDsa] = useState<EditingDsaQuestion | null>(null);
   const [movingQuestion, setMovingQuestion] = useState<{
     id: string;
     label: string;
@@ -137,8 +148,7 @@ export default function QuestionList({
     destination: SectionMeta,
   ) => {
     const changedSection =
-      destination.topic !== section.topic ||
-      destination.file !== section.file;
+      destination.topic !== section.topic || destination.file !== section.file;
     if (!changedSection) {
       router.refresh();
       return;
@@ -167,31 +177,63 @@ export default function QuestionList({
     setQuestionOrder,
   });
 
+  // A subtopic with nothing in it at all was showing "No questions match this
+  // filter" with a Clear filter button that does nothing — the filtered-to-zero
+  // copy is only right when there was something to filter.
+  const sectionEmpty = (totals[sectionUrl(section)] ?? 0) === 0;
+  const firstQuestionLabel = section.isDsa
+    ? 'first DSA question'
+    : codeSection
+      ? 'code question'
+      : 'first question';
+
   return (
     <>
       <div className="questions-list" ref={listRef}>
         {processed.length === 0 ? (
           <div className="filter-empty">
-            No questions match this filter.{' '}
-            <button type="button" className="link-btn" onClick={clearFilters}>
-              Clear filter
-            </button>
+            {sectionEmpty ? (
+              <>
+                Nothing here yet — use the + button to add the{' '}
+                {firstQuestionLabel}.
+              </>
+            ) : (
+              <>
+                No questions match this filter.{' '}
+                <button
+                  type="button"
+                  className="link-btn"
+                  onClick={clearFilters}
+                >
+                  Clear filter
+                </button>
+              </>
+            )}
           </div>
         ) : (
           processed.map(({ q, priority }) => {
             const manageable = mounted && canManage(q, user);
             const isDone = mounted && !!store[q.id];
+            const isDsa = !!(q.code && q.problem);
+            const prereqs = isDsa ? splitList(q.prerequisites) : [];
             return (
               <QuestionItem
                 key={q.id}
                 id={q.id}
                 title={q.title}
                 icon={q.code ? <Code2 size={14} /> : undefined}
+                subtitle={
+                  prereqs.length ? (
+                    <PrereqTags prerequisites={prereqs} />
+                  ) : undefined
+                }
                 isDone={isDone}
                 isOpen={codeSection ? !closedIds.has(q.id) : openId === q.id}
                 isSelected={selectedIds.has(q.id)}
                 onToggleSelect={
-                  selectMode && manageable ? () => toggleSelected(q.id) : undefined
+                  selectMode && manageable
+                    ? () => toggleSelected(q.id)
+                    : undefined
                 }
                 priority={priority}
                 reorderable={reorderable}
@@ -212,6 +254,9 @@ export default function QuestionList({
                 }}
                 actions={
                   <>
+                    {isDsa && priority && (
+                      <DifficultyPill priority={priority} />
+                    )}
                     <StarButton
                       isStarred={!!q.starred}
                       onToggle={() => toggleQuestionStarred(q.id, !!q.starred)}
@@ -219,14 +264,34 @@ export default function QuestionList({
                     <RowActions
                       getText={() => stripHtml(q.title)}
                       isStarred={!!q.starred}
-                      onToggleStar={() => toggleQuestionStarred(q.id, !!q.starred)}
+                      onToggleStar={() =>
+                        toggleQuestionStarred(q.id, !!q.starred)
+                      }
                       isGreyZone={!!q.greyZone}
-                      onToggleGreyZone={() => toggleQuestionGreyZone(q.id, !!q.greyZone)}
+                      onToggleGreyZone={() =>
+                        toggleQuestionGreyZone(q.id, !!q.greyZone)
+                      }
                       priority={priority}
-                      onSetPriority={(level) => updateQuestionPriority(q.id, level)}
+                      onSetPriority={(level) =>
+                        updateQuestionPriority(q.id, level)
+                      }
                       onEdit={
                         manageable
                           ? async () => {
+                              if (isDsa) {
+                                setEditingDsa({
+                                  id: q.id,
+                                  title: q.title,
+                                  problem: q.problem ?? '',
+                                  prerequisites: q.prerequisites ?? null,
+                                  lang: q.lang ?? null,
+                                  code: q.code ?? '',
+                                  output: q.output ?? null,
+                                  markdown: q.markdown ?? '',
+                                  priority,
+                                });
+                                return;
+                              }
                               if (q.code) {
                                 setEditingCode({
                                   id: q.id,
@@ -274,9 +339,7 @@ export default function QuestionList({
                             }
                           : undefined
                       }
-                      onDelete={
-                        manageable ? () => remove(q.id) : undefined
-                      }
+                      onDelete={manageable ? () => remove(q.id) : undefined}
                     />
                   </>
                 }
@@ -314,6 +377,22 @@ export default function QuestionList({
         <SaveToast
           title="Set aside"
           detail="Find it in Inbox whenever you're ready."
+        />
+      )}
+
+      {editingDsa && (
+        <DsaQuestionModal
+          section={section}
+          editing={editingDsa}
+          onClose={() => setEditingDsa(null)}
+          onSaved={(question, destination) => {
+            // The subtopic is a picker now, so an edit can land the question in
+            // a different one — which mints a new id. handleMoved is a no-op
+            // beyond a refresh when the section didn't actually change.
+            const oldId = editingDsa.id;
+            setEditingDsa(null);
+            handleMoved(oldId, question.id, destination);
+          }}
         />
       )}
 

@@ -2,6 +2,10 @@ export interface SectionMeta {
   topic: string; // folder path relative to repo root, e.g. "javascript", "react/ecosystem"
   file: string; // filename without .md, e.g. "foundations", "redux"
   label: string; // display name
+  // Holds DSA problems — description, prerequisites, solution/output/explanation.
+  // Unlike the code-output subtopic this is a plain flag, not a reserved slug:
+  // a topic can have as many DSA subtopics as it likes, each slugified normally.
+  isDsa?: boolean;
 }
 
 export interface TopicGroup {
@@ -9,6 +13,8 @@ export interface TopicGroup {
   slug: string; // single URL segment, e.g. "javascript"
   sections: SectionMeta[];
   blurb?: string;
+  // Every subtopic added under this topic becomes a DSA subtopic automatically.
+  isDsa?: boolean;
 }
 
 // A topic's code-output subtopic is an ordinary `sections` row created from
@@ -70,23 +76,6 @@ export function findGroupForSection(
 
 export function sectionUrl(section: SectionMeta): string {
   return `/${section.topic}/${section.file}`;
-}
-
-export function findPrevNextSections(
-  groups: TopicGroup[],
-  section: SectionMeta,
-): {
-  prev: SectionMeta | null;
-  next: SectionMeta | null;
-} {
-  const all = groups.flatMap((g) => g.sections);
-  const idx = all.findIndex(
-    (s) => s.topic === section.topic && s.file === section.file,
-  );
-  return {
-    prev: idx > 0 ? all[idx - 1] : null,
-    next: idx < all.length - 1 ? all[idx + 1] : null,
-  };
 }
 
 export function slugify(text: string): string {

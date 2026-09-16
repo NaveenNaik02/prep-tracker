@@ -61,10 +61,11 @@ export const buildPlacementOptions = (
     };
   }
 
-  // The code-output subtopic is never a placement target here: it takes code
-  // questions only, authored through CodeQuestionModal.
+  // Neither the code-output subtopic nor a DSA one is a placement target
+  // here: they take code and DSA questions, authored through their own
+  // modals, and this form supplies neither a snippet nor a description.
   const sectionOptions: PlacementOption[] = (group?.sections ?? [])
-    .filter((s) => !isCodeOutputSection(s))
+    .filter((s) => !isCodeOutputSection(s) && !s.isDsa)
     .map((s) => ({
       value: sectionKey(s),
       label: s.label,

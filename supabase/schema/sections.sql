@@ -8,7 +8,8 @@ CREATE TABLE public.sections (
     label text NOT NULL,
     group_slug text NOT NULL,
     created_by uuid,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    is_dsa boolean DEFAULT false NOT NULL
 );
 
 ALTER TABLE public.sections OWNER TO postgres;

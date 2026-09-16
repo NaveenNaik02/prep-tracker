@@ -46,7 +46,10 @@ export default function TopicCard({ group }: TopicCardProps) {
           </div>
         </div>
         <div className="tc-head">
-          <span className="tc-name">{group.groupName}</span>
+          <span className="tc-name">
+            {group.groupName}
+            {group.isDsa && <span className="dsa-badge">DSA</span>}
+          </span>
         </div>
         <p className="tc-blurb">{group.blurb}</p>
         {hasSections ? (

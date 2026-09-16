@@ -10,6 +10,8 @@ export interface FormatAnswerInput {
   instructions?: string;
   wantCodeExample?: boolean;
   isImpl?: boolean;
+  // Formatting a DSA problem statement rather than an answer.
+  isDescription?: boolean;
   lang?: string;
   model?: string;
 }
@@ -33,7 +35,7 @@ export async function formatAnswer(input: FormatAnswerInput): Promise<string> {
 
   return gemini({
     system: PROMPTS.formatAnswer(input),
-    prompt: `${contextBits ? contextBits + '\n\n' : ''}Reformat this into the answer's Markdown style:\n\n${text}`,
+    prompt: `${contextBits ? contextBits + '\n\n' : ''}Reformat this ${input.isDescription ? "problem statement, keeping it a problem statement" : "into the answer's Markdown style"}:\n\n${text}`,
     model: input.model,
     failure: 'Could not format this answer — try again.',
   });

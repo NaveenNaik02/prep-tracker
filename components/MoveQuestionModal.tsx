@@ -34,10 +34,10 @@ export default function MoveQuestionModal({ groups, questionId, label, currentSe
   const filteredGroups = groups
     .map((g) => ({
       group: g,
-      // Code-output subtopics are excluded as destinations — they hold code
-      // questions only, and moveQuestion doesn't add the snippet a row needs
-      // to render as one.
-      sections: g.sections.filter((s) => !isCodeOutputSection(s) && (!q || g.groupName.toLowerCase().includes(q) || s.label.toLowerCase().includes(q))),
+      // Code-output and DSA subtopics are excluded as destinations — they hold
+      // their own question kinds, and moveQuestion doesn't add the snippet or
+      // description a row needs to render as one.
+      sections: g.sections.filter((s) => !isCodeOutputSection(s) && !s.isDsa && (!q || g.groupName.toLowerCase().includes(q) || s.label.toLowerCase().includes(q))),
     }))
     .filter((g) => g.sections.length > 0)
 

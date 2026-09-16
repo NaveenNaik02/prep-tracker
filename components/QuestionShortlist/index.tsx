@@ -11,7 +11,12 @@ import {
 import { setAsideQuestion } from '@/lib/actions/setAside';
 import { bulkSetFlag } from '@/lib/actions/questionFlags';
 import type { ShortlistQuestion, ShortlistFlag } from '@/lib/db/shortlist';
-import { EditQuestionModal, type EditingQuestion } from '@/features/authoring';
+import {
+  DsaQuestionModal,
+  EditQuestionModal,
+  type EditingDsaQuestion,
+  type EditingQuestion,
+} from '@/features/authoring';
 import MoveQuestionModal from '@/components/MoveQuestionModal';
 import SaveToast from '@/components/SaveToast';
 import { useDeleteToast } from '@/components/useDeleteToast';
@@ -36,6 +41,10 @@ export const QuestionShortlist = ({ questions, flag }: Props) => {
   const { remove, toast: deleteToast } = useDeleteToast();
   const [editingQuestion, setEditingQuestion] =
     useState<EditingQuestion | null>(null);
+  const [editingDsa, setEditingDsa] = useState<{
+    editing: EditingDsaQuestion;
+    section: SectionMeta;
+  } | null>(null);
   const [movingQuestion, setMovingQuestion] = useState<{
     id: string;
     label: string;
@@ -52,7 +61,24 @@ export const QuestionShortlist = ({ questions, flag }: Props) => {
     [flag, bumpFlagCount],
   );
 
-  const handleEdit = useCallback(({ q, section }: ShortlistRowData) =>
+  const handleEdit = useCallback(({ q, section }: ShortlistRowData) => {
+    if (q.code && q.problem) {
+      setEditingDsa({
+        section: section,
+        editing: {
+          id: q.id,
+          title: q.title,
+          problem: q.problem ?? '',
+          prerequisites: q.prerequisites ?? null,
+          lang: q.lang ?? null,
+          code: q.code ?? '',
+          output: q.output ?? null,
+          markdown: q.markdown ?? '',
+          priority: q.priority,
+        },
+      });
+      return;
+    }
     setEditingQuestion({
       id: q.id,
       title: q.title,
@@ -62,7 +88,8 @@ export const QuestionShortlist = ({ questions, flag }: Props) => {
       lang: q.lang,
       tags: q.tags,
       problem: q.problem,
-    }), []);
+    });
+  }, []);
 
   const handleMove = useCallback(({ q, section }: ShortlistRowData) =>
     setMovingQuestion({ id: q.id, label: q.title, section }), []);
@@ -85,6 +112,18 @@ export const QuestionShortlist = ({ questions, flag }: Props) => {
         onMove={handleMove}
         onSetAside={handleSetAside}
       />
+
+      {editingDsa && (
+        <DsaQuestionModal
+          section={editingDsa.section}
+          editing={editingDsa.editing}
+          onClose={() => setEditingDsa(null)}
+          onSaved={() => {
+            setEditingDsa(null);
+            router.refresh();
+          }}
+        />
+      )}
 
       {editingQuestion && (
         <EditQuestionModal

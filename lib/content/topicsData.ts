@@ -16,12 +16,12 @@ export const getAllGroups = cache(async (): Promise<TopicGroup[]> => {
   const [{ data: groupRows }, { data: sectionRows }] = await Promise.all([
     supabase
       .from('topic_groups')
-      .select('slug, group_name, blurb')
+      .select('slug, group_name, blurb, is_dsa')
       .order('created_at')
       .order('slug'),
     supabase
       .from('sections')
-      .select('topic, file, label, group_slug')
+      .select('topic, file, label, group_slug, is_dsa')
       .order('created_at')
       .order('file'),
   ]);
@@ -30,6 +30,7 @@ export const getAllGroups = cache(async (): Promise<TopicGroup[]> => {
     groupName: g.group_name,
     slug: g.slug,
     blurb: g.blurb ?? undefined,
+    isDsa: g.is_dsa,
     sections: [],
   }));
 
@@ -41,6 +42,7 @@ export const getAllGroups = cache(async (): Promise<TopicGroup[]> => {
       topic: s.topic,
       file: s.file,
       label: s.label,
+      isDsa: s.is_dsa,
     });
   }
 

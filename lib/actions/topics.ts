@@ -18,6 +18,7 @@ function requireAuthor(action: string) {
 export interface AddTopicGroupInput {
   groupName: string;
   blurb: string;
+  isDsa?: boolean;
 }
 
 // Creates a new top-level topic with no subtopics yet — mirrors how
@@ -31,6 +32,7 @@ export async function addTopicGroup(
   const groupName = input.groupName.trim();
   if (groupName.length < 2) throw new Error('Topic name is too short');
   const blurb = input.blurb.trim();
+  const isDsa = !!input.isDsa;
 
   const groups = await getAllGroups();
   let slug = uniqueSlug(slugify(groupName), new Set(groups.map((g) => g.slug)));
@@ -45,11 +47,18 @@ export async function addTopicGroup(
       slug,
       group_name: groupName,
       blurb: blurb || null,
+      is_dsa: isDsa,
       created_by: user.id,
     });
     if (!error) {
       revalidatePath('/');
-      return { groupName, slug, blurb: blurb || undefined, sections: [] };
+      return {
+        groupName,
+        slug,
+        blurb: blurb || undefined,
+        isDsa,
+        sections: [],
+      };
     }
     if (error.code !== '23505') throw error;
     slug = `${base}-${attempt + 1}`;
@@ -65,6 +74,9 @@ export interface AddSectionInput {
   // Makes this the topic's code-output subtopic — it holds code snippets with
   // a collapsed output/explanation instead of a regular question list.
   isCode?: boolean;
+  // Makes this a DSA subtopic. Implied for every subtopic of a DSA topic, so
+  // callers only pass it for a DSA subtopic under an ordinary topic.
+  isDsa?: boolean;
 }
 
 // Adds a subtopic to an existing (static or previously-added) topic group.
@@ -94,11 +106,16 @@ export async function addSection(
     ? CODE_OUTPUT_FILE
     : uniqueSlug(slugify(label), takenFiles);
 
+  // A code-output subtopic is never also a DSA one — they're different bodies,
+  // and the add-question FAB has to pick exactly one modal from this.
+  const isDsa = !input.isCode && (input.isDsa || !!group.isDsa);
+
   const { error } = await supabase.from('sections').insert({
     topic,
     file,
     label,
     group_slug: group.slug,
+    is_dsa: isDsa,
     created_by: user.id,
   });
   if (error) {
@@ -111,7 +128,7 @@ export async function addSection(
   revalidatePath(`/${group.slug}`);
   revalidatePath(`/${topic}/${file}`);
 
-  const section: SectionMeta = { topic, file, label };
+  const section: SectionMeta = { topic, file, label, isDsa };
   return {
     section,
     group: { ...group, sections: [...group.sections, section] },

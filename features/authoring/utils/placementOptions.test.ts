@@ -34,6 +34,23 @@ describe('buildPlacementOptions', () => {
     expect(topicOptions.every((o) => o.sub === undefined)).toBe(true);
   });
 
+  it('excludes code-output and DSA subtopics as placement targets', () => {
+    const withSpecial: TopicGroup[] = [
+      {
+        slug: 'dsa',
+        groupName: 'DSA',
+        isDsa: true,
+        sections: [
+          { topic: 'dsa', file: 'arrays', label: 'Arrays', isDsa: true },
+          { topic: 'dsa', file: 'code_output', label: 'Code Output' },
+          { topic: 'dsa', file: 'theory', label: 'Theory' },
+        ],
+      },
+    ];
+    const { sectionOptions } = buildPlacementOptions(withSpecial, 'dsa', null);
+    expect(sectionOptions.map((o) => o.value)).toEqual(['dsa/theory']);
+  });
+
   it('appends a staged subtopic only under its own topic', () => {
     const pending = {
       mode: 'new-subtopic',

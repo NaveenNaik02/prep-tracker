@@ -14,8 +14,14 @@ export interface ParsedQuestion {
   lang?: string | null;
   tags?: string | null;
   problem?: string | null;
+  // The description rendered at write time. Only DSA questions set it —
+  // `problem` alone renders as plain text on the problem/solution rail.
+  problemHtml?: string | null;
+  // Comma-separated, same shape as `tags`. DSA questions only.
+  prerequisites?: string | null;
   // Set only on code-output questions — `code` is the discriminator, output
-  // and the explanation (bodyHtml) are both optional on one.
+  // and the explanation (bodyHtml) are both optional on one. `code` together
+  // with `problem` is what marks a DSA question instead.
   code?: string | null;
   output?: string | null;
   starred?: boolean;
@@ -66,7 +72,7 @@ export async function parseSection(
   const { data } = await supabase
     .from('questions')
     .select(
-      'id, number, title, body_html, markdown, created_by, lang, tags, problem, code, output, starred, grey_zone, priority',
+      'id, number, title, body_html, markdown, created_by, lang, tags, problem, problem_html, prerequisites, code, output, starred, grey_zone, priority',
     )
     .eq('topic', section.topic)
     .eq('file', section.file)
@@ -81,6 +87,8 @@ export async function parseSection(
     lang: r.lang,
     tags: r.tags,
     problem: r.problem,
+    problemHtml: r.problem_html,
+    prerequisites: r.prerequisites,
     code: r.code,
     output: r.output,
     starred: r.starred,

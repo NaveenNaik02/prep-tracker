@@ -1509,6 +1509,39 @@ mark {
 .aq-dd-trigger[aria-expanded='true'] .aq-dd-chevron {
   transform: rotate(180deg);
 }
+/* AqCombo — the typed variant of .aq-dd-trigger. The select's open state keys
+   off aria-expanded on the trigger itself; here that attribute belongs to the
+   caret button, so the container carries a class instead. */
+.aq-dd-combo {
+  cursor: text;
+}
+.aq-dd-trigger.open {
+  border-color: var(--accent);
+  background: var(--bg-card);
+}
+.aq-dd-trigger.open .aq-dd-chevron {
+  transform: rotate(180deg);
+}
+.aq-dd-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+}
+.aq-dd-caret {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
 .aq-dd-menu {
   position: absolute;
   top: calc(100% + 6px);
@@ -5425,6 +5458,92 @@ div.drag-shadow.drag-shadow {
   padding: 13px 15px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
+}
+/* DSA questions (`code` + `problem`) — description and prerequisites above the
+   shared .q-code-card, plus the difficulty pill and pattern tags the row header
+   carries. Difficulty reuses the priority palette: low/med/high = Easy/Medium/
+   Hard, so no new tokens and dark mode comes for free. */
+/* In a DSA body the solution card follows the description (or its collapsed
+   toggle) rather than opening the body, so it needs the same separation the
+   toggles below it carry. .q-code-card itself stays margin-less for the
+   code-output body, where it is the first thing in the card. */
+.q-dsa-body .q-code-card {
+  margin-top: var(--s-3);
+}
+.q-prereq-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+.q-prereq-tag {
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 11px;
+  font-weight: 600;
+}
+.diff {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.diff-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.diff.low {
+  background: var(--pri-low-soft);
+  color: var(--pri-low);
+}
+.diff.med {
+  background: var(--pri-med-soft);
+  color: var(--pri-med);
+}
+.diff.high {
+  background: var(--pri-high-soft);
+  color: var(--pri-high);
+}
+/* "Generate all fields" — a whole-form action, so it gets its own row at the
+   top of the DSA modal rather than sitting in a field's label row. */
+.aq-generate-all {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elev);
+}
+.aq-generate-all .aq-impl-toggle-sub {
+  line-height: 1.45;
+}
+.aq-generate-all .aq-generate-btn {
+  flex-shrink: 0;
+}
+.dsa-badge {
+  display: inline-block;
+  margin-left: 7px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  vertical-align: middle;
 }
 .q-text-icon {
   display: inline-flex;

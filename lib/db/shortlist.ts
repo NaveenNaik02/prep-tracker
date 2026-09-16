@@ -20,5 +20,9 @@ export interface ShortlistQuestion {
   lang?: string | null;
   tags?: string | null;
   problem?: string | null;
+  problemHtml?: string | null;
+  prerequisites?: string | null;
+  code?: string | null;
+  output?: string | null;
   priority: PriorityLevel | null;
 }

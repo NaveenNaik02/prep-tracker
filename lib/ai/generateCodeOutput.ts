@@ -11,6 +11,9 @@ export interface CodeGenerationInput {
   // it from having to derive one, and from contradicting the saved value.
   output?: string;
   model?: string;
+  // DSA context — the problem being solved. Ignored by the other two prompts,
+  // which describe a snippet rather than a solution.
+  title?: string;
   // The explanation's formatting instructions — the 'code-explanation'
   // instruction preset, editable per-question and in Settings. Ignored by
   // generateCodeOutput: raw output has no formatting to steer.
@@ -62,6 +65,20 @@ export async function generateCodeExplanation(
       input.output?.trim()
         ? `Output: ${input.output.trim()}`
         : 'Output: (not specified — determine it yourself as part of the explanation)',
+    ],
+    'Could not generate an explanation — try again.',
+  );
+}
+
+export async function generateDsaExplanation(
+  input: CodeGenerationInput,
+): Promise<string> {
+  return run(
+    input,
+    PROMPTS.dsaExplanation(input),
+    [
+      langLine(input.lang),
+      input.title?.trim() ? `Problem: ${input.title.trim()}` : '',
     ],
     'Could not generate an explanation — try again.',
   );

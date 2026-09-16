@@ -4,7 +4,12 @@ import { useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { Plus } from 'lucide-react'
-import { findSection, isCodeOutputSection, sectionUrl } from '@/lib/content/topics'
+import {
+  findGroup,
+  findSection,
+  isCodeOutputSection,
+  sectionUrl,
+} from '@/lib/content/topics'
 import { useAppStore } from '@/lib/stores/appStore';
 import { useFabDrag } from '@/lib/hooks'
 
@@ -17,6 +22,10 @@ const AddQuestionModal = dynamic(
 const AddTopicModal = dynamic(() => import('./AddTopicModal'), { ssr: false })
 const CodeQuestionModal = dynamic(
   () => import('@/features/authoring').then((m) => m.CodeQuestionModal),
+  { ssr: false },
+)
+const DsaQuestionModal = dynamic(
+  () => import('@/features/authoring').then((m) => m.DsaQuestionModal),
   { ssr: false },
 )
 
@@ -32,15 +41,29 @@ export default function AddQuestionFab() {
   if (pathname === '/settings' || pathname === '/inbox' || pathname === '/priority-mix') return null
 
   const isHome = pathname === '/'
-  const currentSection = findSection(groups, pathname.split('/').filter(Boolean))
+  const segments = pathname.split('/').filter(Boolean)
+  const currentSection = findSection(groups, segments)
+  // A topic overview is a single segment — a section URL is always at least
+  // two, so this can't match one by accident.
+  const currentGroup = segments.length === 1 ? findGroup(groups, segments[0]) : null
+  // On a DSA topic's overview there's no section in the URL — the modal picks
+  // among that topic's DSA subtopics, or names a new one. A DSA topic with no
+  // subtopics yet is the normal starting state, so it still opens.
+  const dsaGroup = currentGroup?.isDsa ? currentGroup : null
+  const isDsaAdd = !!currentSection?.isDsa || !!dsaGroup
+  const addLabel = isHome
+    ? 'Add topic'
+    : isDsaAdd
+      ? 'Add DSA question'
+      : 'Add question'
 
   return (
     <>
       <button
         className="fab"
         style={style}
-        title={isHome ? 'Add topic' : 'Add question'}
-        aria-label={isHome ? 'Add topic' : 'Add question'}
+        title={addLabel}
+        aria-label={addLabel}
         onClick={() => setOpen(true)}
         {...handlers}
       >
@@ -57,6 +80,18 @@ export default function AddQuestionFab() {
               } else {
                 router.refresh()
               }
+            }}
+          />
+        ) : isDsaAdd ? (
+          <DsaQuestionModal
+            section={currentSection?.isDsa ? currentSection : undefined}
+            groupSlug={dsaGroup?.slug}
+            onClose={() => setOpen(false)}
+            onSaved={(_question, section) => {
+              setOpen(false)
+              const url = sectionUrl(section)
+              if (pathname === url) router.refresh()
+              else router.push(url)
             }}
           />
         ) : currentSection && isCodeOutputSection(currentSection) ? (

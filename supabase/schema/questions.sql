@@ -21,6 +21,8 @@ CREATE TABLE public.questions (
     grey_zone boolean DEFAULT false NOT NULL,
     code text,
     output text,
+    problem_html text,
+    prerequisites text,
     CONSTRAINT questions_priority_check CHECK ((priority = ANY (ARRAY['high'::text, 'med'::text, 'low'::text])))
 );
 

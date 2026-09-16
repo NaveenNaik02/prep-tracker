@@ -29,6 +29,7 @@ export interface AddQuestionInput {
   lang?: string;
   tags?: string;
   problem?: string;
+  prerequisites?: string;
   code?: string;
   output?: string;
   priority?: PriorityLevel | null;
@@ -95,11 +96,20 @@ async function carryOverUserRows(
 
 // A code-output question is a snippet plus (optionally) its output and an
 // explanation — both of those can legitimately be blank, so `code` carries
-// the length check the answer normally would.
-function validateQuestion(title: string, markdown: string, code: string) {
+// the length check the answer normally would. A DSA question is the same but
+// with a description, which is the field that must not be blank: `code` plus
+// `problem` is what makes the saved row render as one.
+function validateQuestion(
+  title: string,
+  markdown: string,
+  code: string,
+  problem: string,
+) {
   if (title.length < 4) throw new Error('Question is too short');
   if (code) {
     if (code.length < 4) throw new Error('Code snippet is too short');
+    if (problem && problem.length < 4)
+      throw new Error('Description is too short');
     return;
   }
   if (markdown.length < 4) throw new Error('Answer is too short');
@@ -118,7 +128,8 @@ export async function addQuestion(
   const title = DOMPurify.sanitize(input.title.trim(), { ALLOWED_TAGS: [] });
   const markdown = input.markdown.trim();
   const code = input.code?.trim() ?? '';
-  validateQuestion(title, markdown, code);
+  const problem = input.problem?.trim() ?? '';
+  validateQuestion(title, markdown, code, problem);
 
   const groups = await getAllGroups();
   const segments = [...input.topic.split('/'), input.file].filter(Boolean);
@@ -128,6 +139,9 @@ export async function addQuestion(
   if (!group) throw new Error('Unknown topic/section');
 
   const bodyHtml = renderAnswerHtml(markdown);
+  // Only DSA questions have a description; the problem/solution rail renders
+  // `problem` as plain text and never reads this.
+  const problemHtml = code ? renderAnswerHtml(problem) : '';
 
   const { data: maxRow } = await supabase
     .from('questions')
@@ -154,7 +168,9 @@ export async function addQuestion(
     created_by: user.id,
     lang: input.lang?.trim() || null,
     tags: input.tags?.trim() || null,
-    problem: input.problem?.trim() || null,
+    problem: problem || null,
+    problem_html: problemHtml || null,
+    prerequisites: input.prerequisites?.trim() || null,
     code: code || null,
     output: input.output?.trim() || null,
     starred: input.starred ?? false,
@@ -177,8 +193,6 @@ export async function updateQuestion(
 
   const title = DOMPurify.sanitize(input.title.trim(), { ALLOWED_TAGS: [] });
   const markdown = input.markdown.trim();
-  const code = input.code?.trim() ?? '';
-  validateQuestion(title, markdown, code);
 
   const groups = await getAllGroups();
   const segments = [...input.topic.split('/'), input.file].filter(Boolean);
@@ -189,10 +203,27 @@ export async function updateQuestion(
 
   const { data: existing } = await supabase
     .from('questions')
-    .select('topic, file, number')
+    .select('topic, file, number, code, output, prerequisites, tags, problem')
     .eq('id', id)
     .maybeSingle();
   if (!existing) throw new Error('Question not found');
+
+  // Forms that don't own a field leave it off the input entirely, and must not
+  // blank it: the plain question form has no code/output/prerequisites inputs,
+  // and the DSA form has no tags input, so editing through either would
+  // otherwise null what the other owns. Absent means keep; an empty string
+  // still clears.
+  const code = input.code?.trim() ?? existing.code ?? '';
+  const output = input.output?.trim() ?? existing.output ?? '';
+  const prerequisites =
+    input.prerequisites?.trim() ?? existing.prerequisites ?? '';
+  const tags = input.tags?.trim() ?? existing.tags ?? '';
+  // CodeQuestionModal sends no `problem`, and the DSA discriminator is
+  // per-row (`code && problem`) not per-section — so a DSA question opened in
+  // that form would otherwise be silently demoted to a code-output one.
+  const problem = input.problem?.trim() ?? existing.problem ?? '';
+
+  validateQuestion(title, markdown, code, problem);
 
   const changedSection =
     existing.topic !== section.topic || existing.file !== section.file;
@@ -222,6 +253,9 @@ export async function updateQuestion(
     : id;
 
   const bodyHtml = renderAnswerHtml(markdown);
+  // Only DSA questions have a description; the problem/solution rail renders
+  // `problem` as plain text and never reads this.
+  const problemHtml = code ? renderAnswerHtml(problem) : '';
 
   const { data, error } = await supabase
     .from('questions')
@@ -236,10 +270,12 @@ export async function updateQuestion(
       label: section.label,
       group_slug: group.slug,
       lang: input.lang?.trim() || null,
-      tags: input.tags?.trim() || null,
-      problem: input.problem?.trim() || null,
+      tags: tags || null,
+      problem: problem || null,
+      problem_html: problemHtml || null,
+      prerequisites: prerequisites || null,
       code: code || null,
-      output: input.output?.trim() || null,
+      output: output || null,
       priority: input.priority ?? null,
     })
     .eq('id', id)

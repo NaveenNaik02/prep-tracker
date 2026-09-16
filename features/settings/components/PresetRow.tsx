@@ -9,6 +9,7 @@ const KIND_LABEL = {
   suggestion: 'Suggestion default',
   problem: 'Problem default',
   'code-explanation': 'Code explanation default',
+  description: 'Description default',
 } as const;
 
 const PresetRow = ({

@@ -59,12 +59,29 @@ export const PROMPTS = {
   // fact" clause is what separates this from `answer`, which may invent content.
   formatAnswer: (o: {
     isImpl?: boolean;
+    isDescription?: boolean;
     wantCodeExample?: boolean;
     instructions?: string;
   }) => {
     const extra = o.instructions?.trim()
       ? `Additionally, follow these formatting preferences from the author: ${o.instructions.trim()}`
       : '';
+    // A problem statement is not an answer. Without its own mode the answer
+    // prompt below reads "study answer" as an instruction to solve the
+    // problem, and comes back with a walkthrough and a solution.
+    if (o.isDescription) {
+      return [
+        "You reformat a coding problem statement for a developer flashcard app's DSA question.",
+        'This is the PROBLEM, not the answer. Never solve it, never add a solution, an approach, a complexity note, or any code that implements it.',
+        "Keep every sentence, constraint and example the author wrote, with the same meaning — you are only applying Markdown.",
+        'Format identifiers, parameters and literal values as `inline code`, and put each worked example in its own fenced block.',
+        'Do NOT start with a Markdown heading — the question title is already the heading.',
+        'Respond ONLY with the reformatted Markdown — no preamble, no closing remarks.',
+        extra,
+      ]
+        .filter(Boolean)
+        .join(' ');
+    }
     return o.isImpl
       ? [
           "You reformat rough code/notes into a clean solution for a developer flashcard app's IMPLEMENTATION question.",
@@ -108,6 +125,49 @@ export const PROMPTS = {
     ]
       .filter(Boolean)
       .join(' ');
+  },
+
+  // Same contract as codeExplanation, different task: a DSA explanation is
+  // about the approach, not about why a snippet prints what it prints. Shares
+  // the 'code-explanation' instruction preset rather than adding a fifth
+  // protected built-in.
+  dsaExplanation: (o: { instructions?: string }) => {
+    return [
+      "You write a short explanation, in Markdown, of how a DSA solution works — for a developer flashcard app's DSA question.",
+      'Name the algorithm or pattern it uses and state its time and space complexity.',
+      'Respond ONLY with the explanation — no preamble, no closing remarks.',
+      o.instructions?.trim() ?? '',
+    ]
+      .filter(Boolean)
+      .join(' ');
+  },
+
+  // One prompt behind both the per-field Generate buttons and "Generate all":
+  // the caller names the keys it wants, so filling a whole question from its
+  // title is a single request rather than one per field.
+  dsaQuestion: (fields: readonly string[]) => {
+    const spec: Record<string, string> = {
+      title:
+        '"title": the name of the problem, e.g. "Two Sum". Just the name — no numbering, no description. If a description or solution is given below, name that problem; otherwise pick a well-known one that fits the subtopic.',
+      subtopic:
+        '"subtopic": which subtopic to file this under. If one of the existing subtopics listed below fits, return its name exactly; otherwise invent a short new one. Name only.',
+      description:
+        '"description": the problem statement in Markdown, 1-3 sentences, naming the inputs and what to return. No title, no worked examples.',
+      prerequisites:
+        '"prerequisites": array of 1-3 short concepts the solver should already know before attempting this.',
+      code: '"code": a complete, runnable program in the requested language — the solution itself plus a short driver that calls it on the worked examples and prints each result using that language\'s own idiom (console.log, print, System.out.println, fmt.Println, …). It must run as-is and produce visible output; do not stop at a bare function definition. Plain source only — no markdown fences, no commentary. Keep real line breaks and indentation, escaped as \\n in the JSON string; never flatten it onto one line.',
+      output:
+        '"output": exactly what that program prints when run, line for line — just the printed text, no commentary and no repetition of the code.',
+      explanation:
+        '"explanation": Markdown. Name the algorithm or pattern and state its time and space complexity.',
+      difficulty: '"difficulty": exactly one of "easy", "medium", "hard".',
+    };
+    return [
+      'You draft parts of a data-structures-and-algorithms interview question for a developer flashcard app, working from the problem title.',
+      'Respond with ONLY minified JSON containing exactly these keys and nothing else:',
+      ...fields.map((f) => `- ${spec[f]}`),
+      'Never wrap the JSON in code fences. Every field must describe the same single problem.',
+    ].join('\n');
   },
 
   placement: [

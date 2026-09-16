@@ -51,6 +51,8 @@ export default function AddTopicModal({
   const [blurb, setBlurb] = useState('');
   const [subLabel, setSubLabel] = useState('');
   const [subIsCode, setSubIsCode] = useState(false);
+  const [topicIsDsa, setTopicIsDsa] = useState(false);
+  const [subIsDsa, setSubIsDsa] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [blurbGen, setBlurbGen] = useState<'idle' | 'loading' | 'error'>(
@@ -68,13 +70,24 @@ export default function AddTopicModal({
 
   const isAnonymous = mounted && !!user?.is_anonymous;
 
+  const parentGroup = groups.find((g) => g.slug === groupSlug);
   // A topic gets at most one code-output subtopic, so the toggle disappears
   // once its parent has one. Switching to such a parent with the toggle
   // already on would otherwise submit a request the insert can only reject.
-  const parentHasCodeSub = !!groups
-    .find((g) => g.slug === groupSlug)
-    ?.sections.some(isCodeOutputSection);
+  const parentHasCodeSub = !!parentGroup?.sections.some(isCodeOutputSection);
+  // Under a DSA topic every subtopic is a DSA subtopic, so there's nothing to
+  // choose — addSection ORs the parent's flag in either way.
+  const parentTopicIsDsa = !!parentGroup?.isDsa;
   const isCode = subIsCode && !parentHasCodeSub;
+  const isDsa = subIsDsa && !parentTopicIsDsa;
+  // isCode is tested first because addSection resolves it the same way
+  // (`isDsa = !input.isCode && …`) — a code-output subtopic under a DSA topic
+  // is still a code-output subtopic.
+  const firstQuestionLabel = isCode
+    ? 'code question'
+    : parentTopicIsDsa || isDsa
+      ? 'first DSA question'
+      : 'first one';
 
   const canGenerateBlurb =
     topicName.trim().length > 1 && blurbGen !== 'loading';
@@ -101,13 +114,18 @@ export default function AddTopicModal({
     setError(null);
     try {
       if (mode === 'topic') {
-        const group = await addTopicGroup({ groupName: topicName, blurb });
+        const group = await addTopicGroup({
+          groupName: topicName,
+          blurb,
+          isDsa: topicIsDsa,
+        });
         onSaved({ kind: 'topic', group });
       } else {
         const { section, group } = await addSection({
           groupSlug,
           label: subLabel,
           isCode,
+          isDsa,
         });
         onSaved({ kind: 'subtopic', section, group });
       }
@@ -238,6 +256,28 @@ export default function AddTopicModal({
                       </div>
                     )}
                   </div>
+                  <div className="aq-field">
+                    <div className="aq-impl-toggle-row">
+                      <label className="aq-toggle">
+                        <input
+                          type="checkbox"
+                          checked={topicIsDsa}
+                          onChange={(e) => setTopicIsDsa(e.target.checked)}
+                        />
+                        <span className="aq-toggle-track">
+                          <span className="aq-toggle-thumb" />
+                        </span>
+                      </label>
+                      <div className="aq-impl-toggle-copy">
+                        <span className="aq-impl-toggle-title">DSA topic</span>
+                        <span className="aq-impl-toggle-sub">
+                          Every subtopic you add under this topic is a DSA
+                          subtopic automatically — description, prerequisites,
+                          Solution/Output/Explanation
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                   <p className="aq-hint">
                     A new topic starts empty — you&apos;ll add subtopics to it
                     next.
@@ -277,8 +317,11 @@ export default function AddTopicModal({
                             checked={subIsCode}
                             onChange={(e) => {
                               setSubIsCode(e.target.checked);
-                              if (e.target.checked && !subLabel.trim()) {
-                                setSubLabel(CODE_OUTPUT_LABEL);
+                              if (e.target.checked) {
+                                setSubIsDsa(false);
+                                if (!subLabel.trim()) {
+                                  setSubLabel(CODE_OUTPUT_LABEL);
+                                }
                               }
                             }}
                           />
@@ -298,9 +341,38 @@ export default function AddTopicModal({
                       </div>
                     </div>
                   )}
+                  {!parentTopicIsDsa && (
+                    <div className="aq-field">
+                      <div className="aq-impl-toggle-row">
+                        <label className="aq-toggle">
+                          <input
+                            type="checkbox"
+                            checked={subIsDsa}
+                            onChange={(e) => {
+                              setSubIsDsa(e.target.checked);
+                              if (e.target.checked) setSubIsCode(false);
+                            }}
+                          />
+                          <span className="aq-toggle-track">
+                            <span className="aq-toggle-thumb" />
+                          </span>
+                        </label>
+                        <div className="aq-impl-toggle-copy">
+                          <span className="aq-impl-toggle-title">
+                            DSA subtopic
+                          </span>
+                          <span className="aq-impl-toggle-sub">
+                            Questions here get a description, prerequisites, and
+                            a Solution/Output/Explanation layout instead of a
+                            plain answer
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   <p className="aq-hint">
                     Starts with no questions — click the + button again once
-                    you&apos;re on its page to add the first one.
+                    you&apos;re on its page to add the {firstQuestionLabel}.
                   </p>
                 </>
               )}

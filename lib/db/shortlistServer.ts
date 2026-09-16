@@ -7,7 +7,7 @@ import type { ShortlistFlag, ShortlistQuestion } from './shortlist';
 // client (the store, QuestionShortlist, both feature clients) while this one
 // pulls in next/headers via createClient().
 const SHORTLIST_COLUMNS =
-  'id, number, title, body_html, markdown, created_by, topic, file, label, group_slug, lang, tags, problem, priority';
+  'id, number, title, body_html, markdown, created_by, topic, file, label, group_slug, lang, tags, problem, problem_html, prerequisites, code, output, priority';
 
 function mapRow(r: Record<string, unknown>): ShortlistQuestion {
   return {
@@ -24,6 +24,10 @@ function mapRow(r: Record<string, unknown>): ShortlistQuestion {
     lang: r.lang as string | null,
     tags: r.tags as string | null,
     problem: r.problem as string | null,
+    problemHtml: r.problem_html as string | null,
+    prerequisites: r.prerequisites as string | null,
+    code: r.code as string | null,
+    output: r.output as string | null,
     priority: r.priority as PriorityLevel | null,
   };
 }

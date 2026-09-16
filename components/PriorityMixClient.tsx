@@ -18,7 +18,12 @@ import {
 } from '@/lib/actions/questionFlags';
 import type { PriorityMixQuestion } from '@/lib/db/priority';
 import type { PriorityLevel } from '@/lib/types';
-import { EditQuestionModal, type EditingQuestion } from '@/features/authoring';
+import {
+  DsaQuestionModal,
+  EditQuestionModal,
+  type EditingDsaQuestion,
+  type EditingQuestion,
+} from '@/features/authoring';
 import { htmlToMarkdown } from '@/lib/htmlToMarkdown';
 import QuestionItem, {
   QuestionAnswerBody,
@@ -280,6 +285,10 @@ export default function PriorityMixClient({
   const [openId, setOpenId] = useState<string | null>(null);
   const [editingQuestion, setEditingQuestion] =
     useState<EditingQuestion | null>(null);
+  const [editingDsa, setEditingDsa] = useState<{
+    editing: EditingDsaQuestion;
+    section: SectionMeta;
+  } | null>(null);
   const [movingQuestion, setMovingQuestion] = useState<{
     id: string;
     label: string;
@@ -571,7 +580,24 @@ export default function PriorityMixClient({
                       }
                       onEdit={
                         canManage
-                          ? () =>
+                          ? () => {
+                              if (r.q.code && r.q.problem) {
+                                setEditingDsa({
+                                  section,
+                                  editing: {
+                                    id: r.q.id,
+                                    title: r.q.title,
+                                    problem: r.q.problem ?? '',
+                                    prerequisites: r.q.prerequisites ?? null,
+                                    lang: r.q.lang ?? null,
+                                    code: r.q.code ?? '',
+                                    output: r.q.output ?? null,
+                                    markdown: r.q.markdown ?? '',
+                                    priority: r.priority,
+                                  },
+                                });
+                                return;
+                              }
                               setEditingQuestion({
                                 id: r.q.id,
                                 title: r.q.title,
@@ -585,7 +611,8 @@ export default function PriorityMixClient({
                                 lang: r.q.lang,
                                 tags: r.q.tags,
                                 problem: r.q.problem,
-                              })
+                              });
+                            }
                           : undefined
                       }
                       onMove={
@@ -623,6 +650,18 @@ export default function PriorityMixClient({
         </div>
       )}
 
+
+      {editingDsa && (
+        <DsaQuestionModal
+          section={editingDsa.section}
+          editing={editingDsa.editing}
+          onClose={() => setEditingDsa(null)}
+          onSaved={() => {
+            setEditingDsa(null);
+            router.refresh();
+          }}
+        />
+      )}
 
       {editingQuestion && (
         <EditQuestionModal

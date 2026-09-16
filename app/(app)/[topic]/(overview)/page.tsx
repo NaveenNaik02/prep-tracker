@@ -21,3 +21,10 @@ export default async function Page({ params }: Props) {
 
   return <TopicOverview slug={group.slug} flagIds={flagIds} />;
 }
+
+// Deliberately no generateStaticParams(): everything is per-account now, and
+// getAllGroups() reads cookies() (via createClient()). Exporting it — even
+// returning [] — opts this route into static generation, and unlisted paths
+// are then generated on demand *statically*, so cookies() throws
+// DYNAMIC_SERVER_USAGE and every page 500s. Without it the route is
+// server-rendered per request, which is what we want.

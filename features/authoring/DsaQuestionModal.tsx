@@ -241,6 +241,7 @@ export const DsaQuestionModal = ({
         await suggestPlacement({
           title: title.trim(),
           tags: prerequisites.trim(),
+          description: problem.trim(),
           groups: [
             {
               groupSlug: group.slug,

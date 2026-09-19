@@ -13,6 +13,8 @@ export interface SuggestPlacementGroup {
 export interface SuggestPlacementInput {
   title: string;
   tags?: string;
+  // The problem statement, for titles too terse to place on their own.
+  description?: string;
   groups: SuggestPlacementGroup[];
   model?: string;
   // Placements the author has already turned down in this session. Sent back
@@ -78,11 +80,16 @@ export async function suggestPlacement(
   const title = input.title.trim();
   if (title.length < 4) throw new Error('Write a question first');
 
+  // Capped so a long problem statement can't crowd out the tree and the
+  // rejected list, which are what actually decide the placement.
+  const description = input.description?.trim().slice(0, 1200) ?? '';
+
   const parsed = await geminiJson({
     system: PROMPTS.placement,
     prompt:
       `Existing curriculum:\n${buildTree(input.groups)}\n\nNew question: "${title}"` +
       (input.tags?.trim() ? `\nTags: ${input.tags.trim()}` : '') +
+      (description ? `\nDescription: ${description}` : '') +
       (input.rejected?.length
         ? `\n\nRejected:\n${input.rejected.map((r) => `- ${describe(r)}`).join('\n')}`
         : ''),

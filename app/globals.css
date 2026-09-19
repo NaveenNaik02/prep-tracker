@@ -4050,6 +4050,78 @@ div.drag-shadow.drag-shadow {
   color: var(--text-muted);
 }
 
+/* Pin toggle — sits inline to the left of the ring, always visible. */
+.tc-top-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tc-pin {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--text-subtle);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+.tc-pin:hover,
+.tc-pin:focus-visible {
+  background: var(--bg-hover);
+  color: var(--accent-text);
+}
+.tc-pin.active {
+  color: var(--accent-text);
+}
+
+/* Pinned grid reordering. The grid is the positioning context for the
+   vertical drop indicator, which reuses .drop-indicator's colour. */
+.dash-grid-pinned {
+  position: relative;
+}
+.tc-draggable {
+  cursor: grab;
+}
+.tc-draggable:active {
+  cursor: grabbing;
+}
+.tc-dragging {
+  opacity: 0.4;
+}
+.drop-indicator-v {
+  top: 0;
+  left: 0;
+  right: auto;
+  width: 3px;
+  height: auto;
+  margin-top: 0;
+  margin-left: -1.5px;
+  transition: left 0.12s ease, top 0.12s ease;
+}
+.drop-indicator-v::before {
+  left: 50%;
+  top: -4px;
+  transform: translateX(-50%);
+}
+
+.dash-section-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-subtle);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 var(--s-3);
+}
+.dash-section-sep {
+  margin-top: var(--s-6);
+}
+
 .dark .tc-badge,
 .theme-sepia .tc-badge {
   --bl: 0.28;

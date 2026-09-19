@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { sectionUrl } from '@/lib/content/topics';
+import { sectionUrl, byPinnedFirst } from '@/lib/content/topics';
 import { useAppStore } from '@/lib/stores/appStore';
 import { SidebarTopicGroup } from './SidebarTopicGroup';
 import { SidebarEmptyState } from './SidebarEmptyState';
@@ -33,9 +33,13 @@ export const SidebarTopicTree = () => {
 
   if (groups.length === 0) return <SidebarEmptyState />;
 
+  // Pinned topics lead here too, in the same order as the dashboard's Pinned
+  // section.
+  const ordered = [...groups].sort(byPinnedFirst);
+
   return (
     <>
-      {groups.map((group) => (
+      {ordered.map((group) => (
         <SidebarTopicGroup
           key={group.slug}
           group={group}

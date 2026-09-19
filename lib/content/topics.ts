@@ -15,6 +15,10 @@ export interface TopicGroup {
   blurb?: string;
   // Every subtopic added under this topic becomes a DSA subtopic automatically.
   isDsa?: boolean;
+  // ISO timestamp of when the topic was pinned; absent when it isn't pinned.
+  // A timestamp rather than a flag so pinned topics can keep the order they
+  // were pinned in.
+  pinnedAt?: string;
 }
 
 // A topic's code-output subtopic is an ordinary `sections` row created from
@@ -29,6 +33,14 @@ export const CODE_OUTPUT_LABEL = 'Code Output';
 
 export function isCodeOutputSection(section: SectionMeta): boolean {
   return section.file === CODE_OUTPUT_FILE;
+}
+
+// Pinned topics lead, oldest pin first, so they read in the order they were
+// pinned. Unpinned topics fall through to the array's existing creation order,
+// which a stable sort preserves. ISO-8601 strings compare chronologically.
+export function byPinnedFirst(a: TopicGroup, b: TopicGroup): number {
+  if (a.pinnedAt && b.pinnedAt) return a.pinnedAt.localeCompare(b.pinnedAt);
+  return Number(!!b.pinnedAt) - Number(!!a.pinnedAt);
 }
 
 export function findGroup(

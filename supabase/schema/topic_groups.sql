@@ -8,7 +8,8 @@ CREATE TABLE public.topic_groups (
     blurb text,
     created_by uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    is_dsa boolean DEFAULT false NOT NULL
+    is_dsa boolean DEFAULT false NOT NULL,
+    pinned_at timestamp with time zone
 );
 
 ALTER TABLE public.topic_groups OWNER TO postgres;

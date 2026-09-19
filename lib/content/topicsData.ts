@@ -16,7 +16,7 @@ export const getAllGroups = cache(async (): Promise<TopicGroup[]> => {
   const [{ data: groupRows }, { data: sectionRows }] = await Promise.all([
     supabase
       .from('topic_groups')
-      .select('slug, group_name, blurb, is_dsa')
+      .select('slug, group_name, blurb, is_dsa, pinned_at')
       .order('created_at')
       .order('slug'),
     supabase
@@ -31,6 +31,7 @@ export const getAllGroups = cache(async (): Promise<TopicGroup[]> => {
     slug: g.slug,
     blurb: g.blurb ?? undefined,
     isDsa: g.is_dsa,
+    pinnedAt: g.pinned_at ?? undefined,
     sections: [],
   }));
 

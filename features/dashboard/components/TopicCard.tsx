@@ -1,17 +1,33 @@
 'use client';
 
-import { CSSProperties } from 'react';
+import {
+  CSSProperties,
+  type KeyboardEvent,
+  type MouseEvent,
+  type PointerEvent,
+  useState,
+} from 'react';
+import { Pin } from 'lucide-react';
 import { HoverPrefetchLink } from '@/components/HoverPrefetchLink';
 import { TopicGroup, sectionUrl } from '@/lib/content/topics';
 import { topicHue, topicIcon } from '@/lib/content/topicMeta';
+import { setTopicPinned } from '@/lib/actions/topicPins';
 import { useProgressStats } from '@/lib/hooks';
 
 interface TopicCardProps {
   group: TopicGroup;
+  // Only the Pinned grid is draggable; elsewhere these stay undefined.
+  dragging?: boolean;
+  onDragPointerDown?: (e: PointerEvent) => void;
 }
 
-export default function TopicCard({ group }: TopicCardProps) {
+export default function TopicCard({
+  group,
+  dragging,
+  onDragPointerDown,
+}: TopicCardProps) {
   const stats = useProgressStats();
+  const [pinned, setPinned] = useState(!!group.pinnedAt);
   const hasSections = group.sections.length > 0;
 
   let done = 0;
@@ -27,8 +43,26 @@ export default function TopicCard({ group }: TopicCardProps) {
   const pct = total ? Math.round((done / total) * 100) : 0;
   const hue = topicHue(group.groupName);
 
+  // The pin sits inside the card's link, so every activation has to stop the
+  // anchor from navigating as well as bubbling.
+  const togglePin = (e: MouseEvent | KeyboardEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const next = !pinned;
+    setPinned(next);
+    setTopicPinned(group.slug, next).catch(() => setPinned(!next));
+  };
+
+  const togglePinOnKey = (e: KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') togglePin(e);
+  };
+
   return (
-    <div className="topic-card">
+    <div
+      className={`topic-card${onDragPointerDown ? ' tc-draggable' : ''}${dragging ? ' tc-dragging' : ''}`}
+      data-slug={group.slug}
+      onPointerDown={onDragPointerDown}
+    >
       <HoverPrefetchLink href={`/${group.slug}`} className="tc-main">
         <div className="tc-top">
           <div
@@ -38,11 +72,25 @@ export default function TopicCard({ group }: TopicCardProps) {
           >
             {topicIcon(group.groupName)}
           </div>
-          <div
-            className="tc-ring"
-            style={{ '--h': hue, '--p': pct } as CSSProperties}
-          >
-            <span>{pct}%</span>
+          <div className="tc-top-right">
+            <span
+              className={`tc-pin${pinned ? ' active' : ''}`}
+              role="button"
+              tabIndex={0}
+              aria-label={`${pinned ? 'Unpin' : 'Pin'} ${group.groupName}`}
+              aria-pressed={pinned}
+              title={pinned ? 'Unpin' : 'Pin to top'}
+              onClick={togglePin}
+              onKeyDown={togglePinOnKey}
+            >
+              <Pin size={13} />
+            </span>
+            <div
+              className="tc-ring"
+              style={{ '--h': hue, '--p': pct } as CSSProperties}
+            >
+              <span>{pct}%</span>
+            </div>
           </div>
         </div>
         <div className="tc-head">

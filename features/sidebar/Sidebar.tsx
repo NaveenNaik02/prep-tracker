@@ -76,6 +76,12 @@ export const Sidebar = () => {
             onClick={closeDrawer}
           />
           <SidebarNavLink
+            href="/library"
+            icon={<Icon.Book />}
+            label="Library"
+            onClick={closeDrawer}
+          />
+          <SidebarNavLink
             href="/settings"
             icon={<Icon.Gear />}
             label="Settings"

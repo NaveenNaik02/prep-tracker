@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, type ReactNode } from 'react'
-import { renderPreviewHtml } from '../utils/markdownPreview'
+import { renderMarkdown } from '@/lib/renderMarkdown'
 
 interface Props {
   tab: 'write' | 'preview'
@@ -30,7 +30,7 @@ export default function MarkdownField({
   tab, onTabChange, value, onChange, placeholder, emptyPreviewText, toolbar, belowTabs, afterPanes,
   readOnly, autoFocus, textareaClassName, editorPaneClassName,
 }: Props) {
-  const html = useMemo(() => renderPreviewHtml(value), [value])
+  const html = useMemo(() => renderMarkdown(value), [value])
 
   return (
     <div className="aq-md-wrap">

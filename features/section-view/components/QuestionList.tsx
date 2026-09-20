@@ -1,17 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { Code2 } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
 import { useAppStore } from '@/lib/stores/appStore';
+import { useLibraryConcepts } from '@/features/library/client';
 import QuestionItem, {
   DifficultyPill,
   PrereqTags,
   QuestionAnswerBody,
   StarButton,
-  splitList,
+  parsePrereqs,
   stripHtml,
 } from '@/components/QuestionItem';
 import RowActions from '@/components/RowActions';
@@ -76,6 +77,18 @@ export default function QuestionList({
 }: QuestionListProps) {
   const router = useRouter();
   const groups = useAppStore((s) => s.groups);
+  // Prerequisites are a DSA-only field, so a section without them has no
+  // reason to ask for the Library's titles.
+  const hasDsa = processed.some(({ q }) => !!(q.code && q.problem));
+  const concepts = useLibraryConcepts(hasDsa);
+  const libraryIndex = useMemo(() => {
+    return Object.fromEntries(
+      concepts.map((c) => [
+        c.title.trim().toLowerCase(),
+        `/read/${c.shareToken}`,
+      ]),
+    );
+  }, [concepts]);
   const { remove, toast: deleteToast } = useDeleteToast();
 
   // Internal component states for tracking open question, editor/mover modals, and status toasts
@@ -215,7 +228,7 @@ export default function QuestionList({
             const manageable = mounted && canManage(q, user);
             const isDone = mounted && !!store[q.id];
             const isDsa = !!(q.code && q.problem);
-            const prereqs = isDsa ? splitList(q.prerequisites) : [];
+            const prereqs = isDsa ? parsePrereqs(q.prerequisites) : [];
             return (
               <QuestionItem
                 key={q.id}
@@ -224,7 +237,10 @@ export default function QuestionList({
                 icon={q.code ? <Code2 size={14} /> : undefined}
                 subtitle={
                   prereqs.length ? (
-                    <PrereqTags prerequisites={prereqs} />
+                    <PrereqTags
+                      prerequisites={prereqs}
+                      libraryIndex={libraryIndex}
+                    />
                   ) : undefined
                 }
                 isDone={isDone}

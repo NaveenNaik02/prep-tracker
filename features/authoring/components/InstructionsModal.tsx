@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { X } from 'lucide-react'
 import { loadPresets, type InstructionPreset } from '@/lib/instructionPresets'
 import AqSelect from '@/components/AqSelect'
-import MarkdownField from './MarkdownField'
+import MarkdownField from '@/components/MarkdownField'
 
 interface Props {
   value: string

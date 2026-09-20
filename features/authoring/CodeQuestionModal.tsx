@@ -21,7 +21,7 @@ import {
 } from '@/lib/ai/generateCodeOutput';
 import { formatAnswer } from '@/lib/ai/formatAnswer';
 import { findGroupForSection, sectionUrl } from '@/lib/content/topics';
-import MarkdownField from './components/MarkdownField';
+import MarkdownField from '@/components/MarkdownField';
 import InstructionsModal from './components/InstructionsModal';
 import { DraftChips } from './components/DraftChips';
 import { capAnswerVersions } from './utils/markdownPreview';

@@ -76,7 +76,10 @@ export async function updateSession(request: NextRequest) {
   // job is to exchange the code for the session that doesn't exist yet.
   const isExempt =
     pathname === '/manifest.json' ||
-    pathname.startsWith('/auth/');
+    pathname.startsWith('/auth/') ||
+    // Shared Library links are public by design — the unguessable token in
+    // the path is what authorizes the read, server-side.
+    pathname.startsWith('/read/');
   const isAuthed = !!claims && !claims.is_anonymous;
 
   if (!isAuthed && !isAuthPage && !isExempt) {

@@ -30,13 +30,13 @@ export const PinnedGrid = ({ groups }: PinnedGridProps) => {
     reorderPinnedTopics(next).catch(() => setOrder(null));
   };
 
-  const { gridRef, dragSlug, indicator, handlePointerDown } = usePinnedDrag({
+  const { gridRef, dragSlug, dropSlug, handlePointerDown } = usePinnedDrag({
     slugs,
     onReorder,
   });
 
   return (
-    <div className="dash-grid dash-grid-pinned" ref={gridRef}>
+    <div className="dash-grid" ref={gridRef}>
       {slugs.map((slug) => {
         const group = bySlug.get(slug);
         if (!group) return null;
@@ -45,20 +45,11 @@ export const PinnedGrid = ({ groups }: PinnedGridProps) => {
             key={slug}
             group={group}
             dragging={dragSlug === slug}
+            dropTarget={dropSlug === slug}
             onDragPointerDown={handlePointerDown(slug)}
           />
         );
       })}
-      {indicator && (
-        <span
-          className="drop-indicator drop-indicator-v"
-          style={{
-            left: indicator.left,
-            top: indicator.top,
-            height: indicator.height,
-          }}
-        />
-      )}
     </div>
   );
 };

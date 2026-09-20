@@ -7,7 +7,7 @@ import {
   type PointerEvent,
   useState,
 } from 'react';
-import { Pin } from 'lucide-react';
+import { GripVertical, Pin } from 'lucide-react';
 import { HoverPrefetchLink } from '@/components/HoverPrefetchLink';
 import { TopicGroup, sectionUrl } from '@/lib/content/topics';
 import { topicHue, topicIcon } from '@/lib/content/topicMeta';
@@ -18,12 +18,14 @@ interface TopicCardProps {
   group: TopicGroup;
   // Only the Pinned grid is draggable; elsewhere these stay undefined.
   dragging?: boolean;
+  dropTarget?: boolean;
   onDragPointerDown?: (e: PointerEvent) => void;
 }
 
 export default function TopicCard({
   group,
   dragging,
+  dropTarget,
   onDragPointerDown,
 }: TopicCardProps) {
   const stats = useProgressStats();
@@ -59,9 +61,8 @@ export default function TopicCard({
 
   return (
     <div
-      className={`topic-card${onDragPointerDown ? ' tc-draggable' : ''}${dragging ? ' tc-dragging' : ''}`}
+      className={`topic-card${dragging ? ' drag-source' : ''}${dropTarget ? ' drop-target' : ''}`}
       data-slug={group.slug}
-      onPointerDown={onDragPointerDown}
     >
       <HoverPrefetchLink href={`/${group.slug}`} className="tc-main">
         <div className="tc-top">
@@ -73,6 +74,18 @@ export default function TopicCard({
             {topicIcon(group.groupName)}
           </div>
           <div className="tc-top-right">
+            {onDragPointerDown && (
+              <span
+                className="tc-drag-handle"
+                role="button"
+                tabIndex={-1}
+                aria-label="Drag to reorder"
+                title="Drag to reorder"
+                onPointerDown={onDragPointerDown}
+              >
+                <GripVertical size={14} />
+              </span>
+            )}
             <span
               className={`tc-pin${pinned ? ' active' : ''}`}
               role="button"

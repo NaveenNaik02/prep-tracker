@@ -13,7 +13,7 @@ import {
 import { AQ_MODELS } from '@/lib/ai/models';
 import { loadPresets } from '@/lib/instructionPresets';
 import AqSelect from '@/components/AqSelect';
-import MarkdownField from './MarkdownField';
+import MarkdownField from '@/components/MarkdownField';
 import InstructionsModal from './InstructionsModal';
 import { PlacementPicker } from './PlacementPicker';
 import { QuestionField } from './QuestionField';

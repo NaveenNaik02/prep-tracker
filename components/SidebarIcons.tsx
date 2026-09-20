@@ -56,6 +56,19 @@ export const Icon = {
       <path d="M2 4h12M4 8h8M6 12h4" />
     </svg>
   ),
+  Book: () => (
+    <svg
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M2 3.5h5a2 2 0 0 1 2 2v8a1.5 1.5 0 0 0-1.5-1.5H2z M14 3.5H9a2 2 0 0 0-2 2v8a1.5 1.5 0 0 1 1.5-1.5H14z" />
+    </svg>
+  ),
   Inbox: () => (
     <svg
       viewBox="0 0 16 16"

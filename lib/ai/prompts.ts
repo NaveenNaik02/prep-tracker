@@ -109,6 +109,23 @@ export const PROMPTS = {
     'You write a single short blurb (max ~12 words, one sentence fragment, no trailing period) ' +
     'for a topic card in a developer interview-prep app. No preamble — respond with only the blurb text.',
 
+  libraryEntry: (o: { type: string }) => {
+    return [
+      `You write concise, accurate reference write-ups on a ${o.type} for a personal study library.`,
+      o.type === 'algorithm'
+        ? 'Cover how it works as numbered steps, then its time complexity (best/average/worst) and space complexity, each under its own heading.'
+        : 'Open with a short intro paragraph, then clearly headed sections.',
+      'Do NOT open with a heading repeating the entry title — the page already shows it; start with the intro prose.',
+      'Respond only in Markdown. No preamble, no closing remarks.',
+    ]
+      .filter(Boolean)
+      .join(' ');
+  },
+
+  libraryTitle:
+    'You name short reference entries for a personal study library. ' +
+    'Respond with ONLY the title text — under 6 words, no quotes, no trailing punctuation.',
+
   codeOutput:
     'You are a code interpreter. Given a code snippet, determine exactly what it prints/returns/outputs when run. ' +
     'Respond with ONLY the raw output — no explanation, no preamble, no markdown code fences, no backticks. ' +

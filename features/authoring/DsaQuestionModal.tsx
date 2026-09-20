@@ -33,11 +33,12 @@ import {
   suggestPlacement,
   type PlacementSuggestion,
 } from '@/lib/ai/suggestPlacement';
-import MarkdownField from './components/MarkdownField';
+import MarkdownField from '@/components/MarkdownField';
+import { GenerateButton } from '@/components/GenerateButton';
+import { PrereqChips } from './components/PrereqChips';
 import InstructionsModal from './components/InstructionsModal';
 import { DraftChips } from './components/DraftChips';
 import { AqCombo } from './components/AqCombo';
-import { GenerateButton } from './components/GenerateButton';
 import { useAnswerDrafts } from './hooks/useAnswerDrafts';
 import { LANG_OPTIONS } from './types';
 import type { DsaQuestionModalProps } from './types';
@@ -638,13 +639,9 @@ export const DsaQuestionModal = ({
               </label>
               {fieldButton('prerequisites', !!prerequisites.trim())}
             </div>
-            <input
-              id="dq-prereqs"
-              className="aq-input"
-              type="text"
-              placeholder="Two Pointers, Hash Set basics"
+            <PrereqChips
               value={prerequisites}
-              onChange={(e) => setPrerequisites(e.target.value)}
+              onChange={setPrerequisites}
             />
             {errorFor('prerequisites') && (
               <div className="aq-gen-error">{errorFor('prerequisites')}</div>

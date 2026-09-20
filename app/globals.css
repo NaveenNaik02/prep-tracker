@@ -1081,6 +1081,25 @@ mark {
   justify-content: space-between;
   gap: var(--s-5);
 }
+.ic-page-head .pg-h1 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 4px;
+  font-family: var(--f-serif);
+  font-size: 24px;
+  font-weight: 700;
+}
+.ic-page-head .pg-h1 svg {
+  width: 20px;
+  height: 20px;
+  color: var(--accent-text);
+}
+.ic-page-sub {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--text-muted);
+}
 .ic-page-cta {
   display: inline-flex;
   align-items: center;
@@ -2702,6 +2721,7 @@ div.drag-shadow.drag-shadow {
   border: 1px solid var(--border-strong);
   background: var(--bg-card);
   white-space: nowrap;
+  text-decoration: none;
   cursor: pointer;
   transition:
     background 0.12s,
@@ -5808,4 +5828,286 @@ div.drag-shadow.drag-shadow {
   .tv-h-row-name {
     width: auto;
   }
+}
+
+/* =========================================================
+   Library — saved write-ups
+   ========================================================= */
+/* --h is set inline per entry type; lightness and chroma stay here so each
+   theme picks its own, the same arrangement as .tc-badge. */
+.lib-tag {
+  --bl: 0.93;
+  --bc: 0.04;
+  --fl: 0.48;
+  --fc: 0.13;
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: oklch(var(--bl) var(--bc) var(--h));
+  color: oklch(var(--fl) var(--fc) var(--h));
+}
+
+.dark .lib-tag,
+.theme-sepia .lib-tag {
+  --bl: 0.28;
+  --bc: 0.05;
+  --fl: 0.8;
+  --fc: 0.12;
+}
+
+.lib-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-4);
+}
+
+.lib-card {
+  position: relative;
+  padding: var(--s-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.lib-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-sm);
+}
+.lib-card-main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  text-align: left;
+  text-decoration: none;
+  color: inherit;
+}
+.lib-card-main::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-lg);
+}
+.lib-card-open {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: var(--bg-soft);
+  color: var(--accent-text);
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s;
+}
+.lib-card:hover .lib-card-open,
+.lib-card-open:focus-visible {
+  opacity: 1;
+}
+.lib-card-open:hover {
+  background: var(--bg-hover);
+}
+.lib-card-title {
+  font-family: var(--f-serif);
+  font-size: 16px;
+  font-weight: 600;
+}
+.lib-card-blurb {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.lib-article-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-4);
+  margin-bottom: var(--s-5);
+}
+.lib-article-title {
+  margin: 6px 0 0;
+  font-family: var(--f-serif);
+  font-size: 26px;
+  font-weight: 700;
+}
+.lib-article-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+/* .q-body carries the answer accordion's frame and reveal animation; inside
+   an article the body is the page, so both come off. */
+.lib-article-body {
+  padding: 0;
+  border: none;
+  margin: 0;
+  animation: none;
+}
+
+@media (max-width: 640px) {
+  .lib-grid {
+    grid-template-columns: 1fr;
+  }
+  .lib-article-head {
+    flex-direction: column;
+  }
+}
+
+/* Shared Library entry (/read/<token>) — no app chrome, just the write-up. */
+.read-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--s-6) var(--s-5) var(--s-7);
+}
+.read-title {
+  margin: 8px 0 var(--s-5);
+  font-family: var(--f-serif);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.read-body {
+  padding: 0;
+  border: none;
+  margin: 0;
+  animation: none;
+}
+
+/* =========================================================
+   Prerequisites chip field (DSA modal)
+   ========================================================= */
+.prereq-field {
+  position: relative;
+}
+.prereq-box {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-height: 42px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-card);
+  cursor: text;
+}
+.prereq-box:focus-within {
+  border-color: var(--accent);
+}
+.prereq-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 4px 0 10px;
+  border-radius: 99px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.prereq-chip.editing {
+  outline: 1px solid var(--accent);
+}
+.prereq-chip-link,
+.prereq-chip-x {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.75;
+}
+.prereq-chip-link:hover,
+.prereq-chip-x:hover {
+  opacity: 1;
+  background: var(--bg-hover);
+}
+.prereq-chip-link-faint {
+  opacity: 0.55;
+}
+.prereq-input {
+  flex: 1;
+  min-width: 140px;
+  height: 28px;
+  border: none;
+  background: none;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+}
+.prereq-linkbar {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.prereq-linkbar .aq-input {
+  flex: 1;
+}
+.prereq-menu {
+  position: absolute;
+  z-index: 30;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  max-height: 210px;
+  overflow-y: auto;
+  padding: 4px;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background: var(--bg-elev);
+  box-shadow: var(--shadow-lg);
+}
+.prereq-menu-head {
+  padding: 6px 8px 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+}
+.prereq-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 7px 8px;
+  border: none;
+  border-radius: 7px;
+  background: none;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.prereq-menu-item:hover {
+  background: var(--bg-hover);
+}
+.prereq-menu-item svg {
+  color: var(--accent-text);
+  flex-shrink: 0;
+}
+.q-prereq-tag.has-link {
+  text-decoration: none;
+}
+.q-prereq-tag.has-link:hover {
+  background: var(--accent);
+  color: #fff;
 }

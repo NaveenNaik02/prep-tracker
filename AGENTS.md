@@ -8,7 +8,7 @@ A **Next.js 16 App Router** app (React 19) backed by **Supabase** (Postgres). Ev
 
 ## Rules for agents
 
-- **Never act on the cloud Supabase project.** No `npm run migrate`, no `scripts/*.js` pointed at cloud, no Management API calls, no service-role writes, no SQL against the cloud DB. Write the migration or script and tell the user to run it. Local Docker Supabase is the only database an agent may touch.
+- **Never act on the cloud Supabase project.** No `pnpm migrate`, no `scripts/*.js` pointed at cloud, no Management API calls, no service-role writes, no SQL against the cloud DB. Write the migration or script and tell the user to run it. Local Docker Supabase is the only database an agent may touch.
 - **Never reset a database.** No `supabase db reset`, no command or script that drops and recreates tables — it destroys local dev data. Schema changes are always incremental migrations.
 - **Never commit.** Finish the work and leave it in the working tree — no `git commit`, branch, reset, or rebase unless the developer asks for that specific command in that message. Generating code is not permission to commit it, and neither is a "yes" to a plan that mentioned commits. The developer reviews every diff and commits it themselves. Staging is the one exception, and only as the checkpoint below.
 
@@ -29,32 +29,35 @@ A **Next.js 16 App Router** app (React 19) backed by **Supabase** (Postgres). Ev
 ## Commands
 
 ```bash
-npm run dev          # Dev server on :3000 against LOCAL Docker Supabase
-npm run dev:remote   # Dev server on :3010 against the CLOUD project
-npm run db:start     # supabase start — local Docker stack (Postgres/GoTrue/Studio)
-npm run db:stop      # supabase stop
-npm run db:studio    # open Supabase Studio for the LOCAL stack — browse table data
-npm run db:psql      # psql shell into the LOCAL Docker Postgres (never cloud)
-npm run db:schema    # regenerate supabase/schema/ from the LOCAL stack
-npm run build        # Production build
-npm run start        # Serve production build
-npm run lint         # ESLint (flat config, eslint.config.mjs)
-npm test             # Vitest, single run (vitest.config.ts)
-npm run skills:install  # restore third-party agent skills from skills-lock.json
+pnpm dev          # Dev server on :3000 against LOCAL Docker Supabase
+pnpm dev:remote   # Dev server on :3010 against the CLOUD project
+pnpm db:start     # supabase start — local Docker stack (Postgres/GoTrue/Studio)
+pnpm db:stop      # supabase stop
+pnpm db:studio    # open Supabase Studio for the LOCAL stack — off by default, see below
+pnpm db:psql      # psql shell into the LOCAL Docker Postgres (never cloud)
+pnpm db:schema    # regenerate supabase/schema/ from the LOCAL stack
+pnpm build        # Production build
+pnpm start        # Serve production build
+pnpm lint         # ESLint (flat config, eslint.config.mjs)
+pnpm test         # Vitest, single run (vitest.config.ts)
+pnpm skills:install  # restore third-party agent skills from skills-lock.json
 ```
 
-- **`npm run dev` never touches the cloud.** It sources `.env.local.docker`, which points `NEXT_PUBLIC_SUPABASE_URL` at `http://127.0.0.1:54321` — the local Docker stack, nothing else.
-- **`npm run dev:remote` is the one that hits the real project.** `DEV_REMOTE=1` switches the app to `.env.local`.
+- **pnpm is the package manager.** `packageManager` in `package.json` pins `pnpm@10.11.0` and `pnpm-lock.yaml` is the committed lockfile — there is no `package-lock.json`. CI and the deploy workflow run `pnpm install --frozen-lockfile`; Vercel picks pnpm up from the lockfile on its own. `pnpm install` warns that it ignored build scripts for `esbuild`, `sharp`, and `unrs-resolver`; that's cosmetic, since all three ship prebuilt platform binaries and lint/test/build pass without them.
+- **`pnpm dev` never touches the cloud.** It sources `.env.local.docker`, which points `NEXT_PUBLIC_SUPABASE_URL` at `http://127.0.0.1:54321` — the local Docker stack, nothing else.
+- **`pnpm dev:remote` is the one that hits the real project.** `DEV_REMOTE=1` switches the app to `.env.local`.
 - **Both can run at once.** `DEV_REMOTE` also flips `distDir` to `.next-remote` (vs. plain `dev`'s `.next`), so the two servers never fight over a build-dir lock. See `next.config.js`.
 - **Neither auto-provisions a session.** Local and prod both require a real login at `/login`.
+- **The local stack runs a trimmed set of services.** `supabase/config.toml` disables `realtime`, `storage`, `inbucket`, `edge_runtime`, `analytics`, and `studio` — ~11 containers down to ~4, because the app only ever talks to Postgres, GoTrue, and PostgREST. Re-enable one by flipping its `enabled` flag and running `pnpm db:stop && pnpm db:start`; the flags only take effect on a fresh start. Day-to-day data browsing is `pnpm db:psql`, and `pnpm db:studio` probes port 54323 first, so it prints how to turn Studio back on instead of opening a dead tab.
+
 - **The local account is yours to create.** Nothing seeds it — `supabase/seed.sql` only adds an RLS policy. Sign up once at `/signup` with the `DEV_USER` / `DEV_PW` values from `.env.local`. `scripts/pull-remote.js` then finds that account by email to re-own the rows it imports, so the address has to match `DEV_USER` exactly.
 
 ### Scripts
 
 ```bash
-npm run migrate      # Apply pending supabase/migrations/*.sql to the CLOUD project
-npm run set-admin    # scripts/set-admin.js <email> [--revoke]
-npm run pull-remote  # Copy CLOUD data into local Docker, re-owned to DEV_USER
+pnpm migrate      # Apply pending supabase/migrations/*.sql to the CLOUD project
+pnpm set-admin    # scripts/set-admin.js <email> [--revoke]
+pnpm pull-remote  # Copy CLOUD data into local Docker, re-owned to DEV_USER
 ```
 
 One more is run by hand, a one-time fixup from the owner-scoped pivot:
@@ -87,22 +90,22 @@ Adding a table, start to finish:
 supabase migration new add_foo   # real timestamp — several older filenames were hand-invented
 # write create table + enable RLS + policies + grants into the new file
 supabase migration up --local    # applies only pending migrations; NOT db reset
-npm run db:schema                # supabase/schema/foo.sql appears on its own
-npm run migrate                  # cloud — developer runs this, never an agent
+pnpm db:schema                # supabase/schema/foo.sql appears on its own
+pnpm migrate                  # cloud — developer runs this, never an agent
 ```
 
 Steps 1-3 are Supabase's own documented imperative flow. `--local` is already the
 default; it is spelled out because the same command takes `--linked`. The repo
-substitutes `npm run migrate` for `supabase db push`, and adds `npm run db:schema`,
+substitutes `pnpm migrate` for `supabase db push`, and adds `pnpm db:schema`,
 which is not a Supabase step.
 
 **Schema changes go in the migration, never in `supabase/schema/`.** Those files are
 outputs — `scripts/db-schema.sh` deletes the directory and re-dumps it from the live
-local DB on every run, so a hand-edit there is gone at the next `npm run db:schema`
+local DB on every run, so a hand-edit there is gone at the next `pnpm db:schema`
 and never reaches any database. Wanting to edit one is the signal that a new
 migration is what you actually want.
 
-**`supabase/schema/` is a generated snapshot, never applied.** 24 chronological migrations don't tell you what the schema _is_ right now; those files do — one per table or view (`questions.sql`, `progress.sql`, …), each carrying that relation's columns, constraints, indexes, RLS policies, and grants together. Regenerate with `npm run db:schema` (`scripts/db-schema.sh`, per-relation `pg_dump` against the local container) after applying a migration locally, and commit the result. The script wipes the directory first, so a dropped table's file disappears on its own. Nothing reads it at runtime and `scripts/migrate.js` only ever globs `supabase/migrations/`.
+**`supabase/schema/` is a generated snapshot, never applied.** 24 chronological migrations don't tell you what the schema _is_ right now; those files do — one per table or view (`questions.sql`, `progress.sql`, …), each carrying that relation's columns, constraints, indexes, RLS policies, and grants together. Regenerate with `pnpm db:schema` (`scripts/db-schema.sh`, per-relation `pg_dump` against the local container) after applying a migration locally, and commit the result. The script wipes the directory first, so a dropped table's file disappears on its own. Nothing reads it at runtime and `scripts/migrate.js` only ever globs `supabase/migrations/`.
 
 **It is a picture of _local_, which is not identical to cloud.** `supabase/seed.sql` runs on `supabase start` and is never pushed, so anything it creates shows up in the snapshot while being absent from the hosted project. Before treating a policy or table in `supabase/schema/` as production reality, check it came from `supabase/migrations/` and not from the seed.
 
@@ -208,7 +211,7 @@ See `components/AGENTS.md` for component conventions — feature-first organizat
 - **Sign-in is email/password, Google, or GitHub** — all in `features/login/actions/auth.ts`, surfaced by `app/login/page.tsx` and `app/signup/page.tsx`. OAuth returns through `/auth/callback`, which calls `exchangeCode`.
 - **`authSlice` holds only** `signInWithGitHub`/`signOut` and the `onAuthStateChange` subscription.
 - **Three helpers in `lib/supabase/user.ts`** — `getUser()`, `requireUser()`, `requireAuthor(message)`. Authoring and AI actions call `requireAuthor()`, which throws unless the caller is signed in and non-anonymous. Middleware already enforces that on every route, so it's defence-in-depth.
-- **Admin status lives in `app_metadata.is_admin`** — never `user_metadata`, since only the service role can write `app_metadata`, which is what makes it safe to trust inside RLS. Granted via `npm run set-admin <email>`.
+- **Admin status lives in `app_metadata.is_admin`** — never `user_metadata`, since only the service role can write `app_metadata`, which is what makes it safe to trust inside RLS. Granted via `pnpm set-admin <email>`.
 - **Admin RLS policies cover writes only.** `20260711194952_admin_question_access.sql` and `20260716120000_topic_delete.sql` add permissive `_admin` policies (Postgres ORs permissive policies together) letting admins edit or delete any question or topic, including ownerless rows. Client-side, `user.app_metadata?.is_admin === true` gates the same actions alongside `createdBy === user.id` checks.
 - **SELECT has no admin bypass** — an admin cannot read another account's rows.
 

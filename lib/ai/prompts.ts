@@ -169,7 +169,7 @@ export const PROMPTS = {
       subtopic:
         '"subtopic": which subtopic to file this under. If one of the existing subtopics listed below fits, return its name exactly; otherwise invent a short new one. Name only.',
       description:
-        '"description": the problem statement in Markdown, 1-3 sentences, naming the inputs and what to return. No title, no worked examples.',
+        '"description": the problem statement in Markdown, 1-3 sentences, naming the inputs and what to return. Language-agnostic: never name a programming language or a language-specific type or API — the language belongs to the solution, not the problem. No title, no worked examples.',
       prerequisites:
         '"prerequisites": array of 1-3 short concepts the solver should already know before attempting this.',
       code: '"code": a complete, runnable program in the requested language — the solution itself plus a short driver that calls it on the worked examples and prints each result using that language\'s own idiom (console.log, print, System.out.println, fmt.Println, …). It must run as-is and produce visible output; do not stop at a bare function definition. Plain source only — no markdown fences, no commentary. Keep real line breaks and indentation, escaped as \\n in the JSON string; never flatten it onto one line.',

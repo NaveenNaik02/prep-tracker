@@ -2,7 +2,7 @@
 
 // Copies the cloud project's data into the local Docker Supabase stack and
 // re-owns every row to the local dev account (DEV_USER in .env.local), so
-// `npm run dev` has a realistic dataset that's actually visible under the
+// `pnpm dev` has a realistic dataset that's actually visible under the
 // owner-scoped read policies (20260802120000_owner_scoped_content_reads.sql).
 //
 // Idempotent: everything is upserted by primary key, nothing is ever deleted,

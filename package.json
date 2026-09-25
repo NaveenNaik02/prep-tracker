@@ -5,12 +5,13 @@
   "engines": {
     "node": "24.x"
   },
+  "packageManager": "pnpm@10.11.0",
   "scripts": {
     "dev": "sh -c 'set -a && . ./.env.local.docker && set +a && next dev'",
     "dev:remote": "DEV_REMOTE=1 next dev -p 3010",
     "db:start": "supabase start",
     "db:stop": "supabase stop",
-    "db:studio": "echo 'Supabase Studio → http://127.0.0.1:54323' && open http://127.0.0.1:54323",
+    "db:studio": "curl -sf --max-time 2 -o /dev/null http://127.0.0.1:54323 && echo 'Supabase Studio → http://127.0.0.1:54323' && open http://127.0.0.1:54323 || { echo 'Nothing on :54323. Either the stack is down (pnpm db:start), or Studio is disabled in supabase/config.toml (set [studio] enabled = true, then pnpm db:stop && pnpm db:start). To browse data without it: pnpm db:psql'; exit 1; }",
     "db:schema": "sh scripts/db-schema.sh",
     "db:psql": "docker exec -i $([ -t 0 ] && printf %s -t) supabase_db_interview psql -U postgres -d postgres",
     "build": "next build",
@@ -21,7 +22,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "//skills:install": "Restores third-party agent skills from skills-lock.json. Their content is gitignored (only the lockfile is committed), so run this after a fresh clone or whenever skills-lock.json changes.",
-    "skills:install": "npx --yes skills experimental_install"
+    "skills:install": "pnpm dlx skills experimental_install"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.0",

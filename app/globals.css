@@ -1349,6 +1349,13 @@ mark {
   grid-template-columns: 1fr 1fr;
   gap: var(--s-4);
 }
+.aq-inline {
+  display: flex;
+  gap: 8px;
+}
+.aq-inline > .aq-input {
+  flex: 1;
+}
 .aq-input,
 .aq-select {
   height: 38px;
@@ -4086,7 +4093,9 @@ div.drag-shadow.drag-shadow {
   flex-shrink: 0;
   color: var(--text-subtle);
   cursor: pointer;
-  transition: color 0.15s, background 0.15s;
+  transition:
+    color 0.15s,
+    background 0.15s;
 }
 .tc-pin:hover,
 .tc-pin:focus-visible {
@@ -4109,7 +4118,10 @@ div.drag-shadow.drag-shadow {
   color: var(--text-subtle);
   cursor: grab;
   opacity: 0;
-  transition: opacity 0.15s, color 0.15s, background 0.15s;
+  transition:
+    opacity 0.15s,
+    color 0.15s,
+    background 0.15s;
 }
 .topic-card:hover .tc-drag-handle,
 .topic-card:focus-within .tc-drag-handle {
@@ -5873,7 +5885,9 @@ div.drag-shadow.drag-shadow {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--bg-card);
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 .lib-card:hover {
   border-color: var(--border-strong);
@@ -5907,7 +5921,9 @@ div.drag-shadow.drag-shadow {
   background: var(--bg-soft);
   color: var(--accent-text);
   opacity: 0;
-  transition: opacity 0.15s, background 0.15s;
+  transition:
+    opacity 0.15s,
+    background 0.15s;
 }
 .lib-card:hover .lib-card-open,
 .lib-card-open:focus-visible {

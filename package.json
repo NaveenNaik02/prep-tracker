@@ -63,8 +63,10 @@
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.2.7"
   },
-  "overrides": {
-    "postcss": "^8.5.14",
-    "jsdom": "26.1.0"
+  "pnpm": {
+    "overrides": {
+      "postcss": "^8.5.14",
+      "jsdom": "26.1.0"
+    }
   }
 }

@@ -11,6 +11,7 @@ import {
   generateLibraryEntry,
   suggestLibraryTitle,
 } from '@/lib/ai/generateLibraryEntry';
+import { unwrap } from '@/lib/ai/result';
 import { useTypewriter } from '@/lib/hooks';
 import { LIB_TYPES, type LibraryEntry, type LibraryType } from '../types';
 import type { LibraryEntryInput } from '../actions/library';
@@ -57,24 +58,28 @@ export const LibraryModal = ({ entry, onClose, onSave }: Props) => {
     try {
       await run();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'That did not work — try again.');
+      setError(
+        err instanceof Error ? err.message : 'That did not work — try again.',
+      );
     }
     setPending(false);
   };
 
   const handleGenerateTitle = () => {
     return runAi(setTitleGen, async () => {
-      setTitle(await suggestLibraryTitle({ type, title, content }));
+      setTitle(unwrap(await suggestLibraryTitle({ type, title, content })));
     });
   };
 
   const handleGenerateContent = () => {
     return runAi(setContentGen, async () => {
-      const text = await generateLibraryEntry({
-        type,
-        title,
-        model: getSavedModel(),
-      });
+      const text = unwrap(
+        await generateLibraryEntry({
+          type,
+          title,
+          model: getSavedModel(),
+        }),
+      );
       setTab('write');
       typewriteContent(text);
     });
@@ -82,11 +87,13 @@ export const LibraryModal = ({ entry, onClose, onSave }: Props) => {
 
   const handleFormat = () => {
     return runAi(setFormatting, async () => {
-      const text = await formatAnswer({
-        text: content,
-        question: title,
-        model: getSavedModel(),
-      });
+      const text = unwrap(
+        await formatAnswer({
+          text: content,
+          question: title,
+          model: getSavedModel(),
+        }),
+      );
       setTab('write');
       setContent(text);
     });
@@ -99,7 +106,9 @@ export const LibraryModal = ({ entry, onClose, onSave }: Props) => {
     try {
       await onSave({ type, title, content });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not save — try again.');
+      setError(
+        err instanceof Error ? err.message : 'Could not save — try again.',
+      );
       setSaving(false);
     }
   };

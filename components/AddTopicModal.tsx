@@ -6,6 +6,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { useAppStore } from '@/lib/stores/appStore';
 import { addTopicGroup, addSection } from '@/lib/actions/topics';
 import { generateTopicBlurb } from '@/lib/ai/generateBlurb';
+import { unwrap } from '@/lib/ai/result';
 import {
   isCodeOutputSection,
   CODE_OUTPUT_LABEL,
@@ -95,7 +96,7 @@ export default function AddTopicModal({
     if (!canGenerateBlurb) return;
     setBlurbGen('loading');
     try {
-      const text = await generateTopicBlurb(topicName);
+      const text = unwrap(await generateTopicBlurb(topicName));
       typewriteBlurb(text);
       setBlurbGen('idle');
     } catch {

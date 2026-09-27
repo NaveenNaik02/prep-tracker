@@ -20,6 +20,7 @@ import {
   generateCodeExplanation,
 } from '@/lib/ai/generateCodeOutput';
 import { formatAnswer } from '@/lib/ai/formatAnswer';
+import { unwrap, type AiResult } from '@/lib/ai/result';
 import { findGroupForSection, sectionUrl } from '@/lib/content/topics';
 import MarkdownField from '@/components/MarkdownField';
 import InstructionsModal from './components/InstructionsModal';
@@ -117,12 +118,12 @@ export const CodeQuestionModal = ({
 
   const runGenerate = async (
     setState: (s: GenState) => void,
-    generate: () => Promise<string>,
+    generate: () => Promise<AiResult<string>>,
     type: (text: string) => void,
   ) => {
     setState('loading');
     try {
-      type((await generate()).trim());
+      type(unwrap(await generate()).trim());
       setState('idle');
     } catch {
       setState('error');
@@ -131,7 +132,7 @@ export const CodeQuestionModal = ({
 
   // Generate and Format both replace the explanation, so both park the old
   // text as a draft first and stream the new one in.
-  const runExplain = (generate: () => Promise<string>) => {
+  const runExplain = (generate: () => Promise<AiResult<string>>) => {
     keepVersion(explain, false);
     runGenerate(setExplainGen, generate, (text) => {
       keepVersion(text, true);

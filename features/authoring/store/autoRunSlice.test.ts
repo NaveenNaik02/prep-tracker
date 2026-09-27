@@ -16,6 +16,8 @@ vi.mock('@/lib/actions/topics', () => ({
   addSection: vi.fn(),
 }));
 
+const ok = <T>(data: T) => ({ ok: true, data });
+
 const { createAuthoringStore } = await import('./authoringStore');
 
 type SectionMeta = { topic: string; file: string; label: string };
@@ -68,16 +70,18 @@ const clean = {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  generateQuestion.mockResolvedValue('What is a closure?');
-  suggestPlacement.mockResolvedValue({
-    mode: 'existing',
-    groupSlug: 'js',
-    topic: 'js',
-    file: 'closures',
-    reasoning: 'fits',
-  });
-  checkDuplicateQuestion.mockResolvedValue(clean);
-  generateAnswer.mockResolvedValue('A function plus its scope.');
+  generateQuestion.mockResolvedValue(ok('What is a closure?'));
+  suggestPlacement.mockResolvedValue(
+    ok({
+      mode: 'existing',
+      groupSlug: 'js',
+      topic: 'js',
+      file: 'closures',
+      reasoning: 'fits',
+    }),
+  );
+  checkDuplicateQuestion.mockResolvedValue(ok(clean));
+  generateAnswer.mockResolvedValue(ok('A function plus its scope.'));
 });
 
 describe('auto-run pipeline', () => {
@@ -104,13 +108,15 @@ describe('auto-run pipeline', () => {
   });
 
   it('checks for duplicates when placement moves the question', async () => {
-    suggestPlacement.mockResolvedValue({
-      mode: 'existing',
-      groupSlug: 'js',
-      topic: 'js',
-      file: 'scope',
-      reasoning: 'better fit',
-    });
+    suggestPlacement.mockResolvedValue(
+      ok({
+        mode: 'existing',
+        groupSlug: 'js',
+        topic: 'js',
+        file: 'scope',
+        reasoning: 'better fit',
+      }),
+    );
     const store = makeStore({
       initialSection: { topic: 'js', file: 'closures', label: 'Closures' },
     });
@@ -121,11 +127,13 @@ describe('auto-run pipeline', () => {
   });
 
   it('pauses on a duplicate and leaves the answer step unrun', async () => {
-    checkDuplicateQuestion.mockResolvedValue({
-      isDuplicate: true,
-      match: 'Explain closures',
-      reasoning: 'same question',
-    });
+    checkDuplicateQuestion.mockResolvedValue(
+      ok({
+        isDuplicate: true,
+        match: 'Explain closures',
+        reasoning: 'same question',
+      }),
+    );
     const store = makeStore();
     await store.getState().startAuto();
 
@@ -138,7 +146,10 @@ describe('auto-run pipeline', () => {
   });
 
   it('carries on past a failed step instead of blocking the run', async () => {
-    suggestPlacement.mockRejectedValueOnce(new Error('rate limited'));
+    suggestPlacement.mockResolvedValueOnce({
+      ok: false,
+      error: 'rate limited',
+    });
     const store = makeStore();
     await store.getState().startAuto();
 
@@ -149,12 +160,14 @@ describe('auto-run pipeline', () => {
   });
 
   it('skips the duplicate check when placement staged a new subtopic', async () => {
-    suggestPlacement.mockResolvedValue({
-      mode: 'new-subtopic',
-      groupSlug: 'js',
-      label: 'Scope',
-      reasoning: 'no home yet',
-    });
+    suggestPlacement.mockResolvedValue(
+      ok({
+        mode: 'new-subtopic',
+        groupSlug: 'js',
+        label: 'Scope',
+        reasoning: 'no home yet',
+      }),
+    );
     const store = makeStore();
     await store.getState().startAuto();
 
@@ -163,9 +176,9 @@ describe('auto-run pipeline', () => {
   });
 
   it('abandons an in-flight run when switched to manual', async () => {
-    let releaseAnswer: (text: string) => void = () => {};
+    let releaseAnswer: (result: unknown) => void = () => {};
     generateAnswer.mockReturnValue(
-      new Promise<string>((resolve) => {
+      new Promise((resolve) => {
         releaseAnswer = resolve;
       }),
     );
@@ -174,7 +187,7 @@ describe('auto-run pipeline', () => {
     await Promise.resolve();
 
     store.getState().dismissAuto();
-    releaseAnswer('too late');
+    releaseAnswer(ok('too late'));
     await run;
 
     expect(store.getState().autoStatus).toBe('idle');

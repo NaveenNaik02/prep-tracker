@@ -1,7 +1,13 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { X, Loader2, SlidersHorizontal, AlignLeft, Sparkles } from 'lucide-react';
+import {
+  X,
+  Loader2,
+  SlidersHorizontal,
+  AlignLeft,
+  Sparkles,
+} from 'lucide-react';
 import AqSelect from '@/components/AqSelect';
 import { useAppStore } from '@/lib/stores/appStore';
 import { useTypewriter } from '@/lib/hooks';
@@ -16,12 +22,9 @@ import {
   generateDsaExplanation,
 } from '@/lib/ai/generateCodeOutput';
 import { generateDsaQuestion } from '@/lib/ai/generateDsaQuestion';
-import {
-  BULK_FIELDS,
-  type DsaDraft,
-  type DsaField,
-} from '@/lib/ai/dsaFields';
+import { BULK_FIELDS, type DsaDraft, type DsaField } from '@/lib/ai/dsaFields';
 import { formatAnswer } from '@/lib/ai/formatAnswer';
+import { unwrap, type AiResult } from '@/lib/ai/result';
 import {
   findGroup,
   findGroupForSection,
@@ -217,20 +220,22 @@ export const DsaQuestionModal = ({
   ) => {
     return run(key, async () => {
       applyDraft(
-        await generateDsaQuestion({
-          // A field being regenerated is never sent back as its own context —
-          // the model would just echo it.
-          title: fields.includes('title') ? '' : title,
-          lang,
-          subtopic: fields.includes('subtopic')
-            ? undefined
-            : (section?.label ?? stagedLabel ?? undefined),
-          subtopics: choices.map((c) => c.label),
-          description: fields.includes('description') ? undefined : problem,
-          code: fields.includes('code') ? undefined : code,
-          fields,
-          model: getSavedModel(),
-        }),
+        unwrap(
+          await generateDsaQuestion({
+            // A field being regenerated is never sent back as its own context —
+            // the model would just echo it.
+            title: fields.includes('title') ? '' : title,
+            lang,
+            subtopic: fields.includes('subtopic')
+              ? undefined
+              : (section?.label ?? stagedLabel ?? undefined),
+            subtopics: choices.map((c) => c.label),
+            description: fields.includes('description') ? undefined : problem,
+            code: fields.includes('code') ? undefined : code,
+            fields,
+            model: getSavedModel(),
+          }),
+        ),
       );
     });
   };
@@ -239,24 +244,26 @@ export const DsaQuestionModal = ({
     if (!group) return;
     return run('section', async () => {
       setSuggestion(
-        await suggestPlacement({
-          title: title.trim(),
-          tags: prerequisites.trim(),
-          description: problem.trim(),
-          groups: [
-            {
-              groupSlug: group.slug,
-              groupName: group.groupName,
-              sections: choices.map((c) => ({
-                topic: c.topic,
-                file: c.file,
-                label: c.label,
-              })),
-            },
-          ],
-          rejected: turnedDown,
-          model: getSavedModel(),
-        }),
+        unwrap(
+          await suggestPlacement({
+            title: title.trim(),
+            tags: prerequisites.trim(),
+            description: problem.trim(),
+            groups: [
+              {
+                groupSlug: group.slug,
+                groupName: group.groupName,
+                sections: choices.map((c) => ({
+                  topic: c.topic,
+                  file: c.file,
+                  label: c.label,
+                })),
+              },
+            ],
+            rejected: turnedDown,
+            model: getSavedModel(),
+          }),
+        ),
       );
     });
   };
@@ -283,10 +290,10 @@ export const DsaQuestionModal = ({
     suggest(turnedDown);
   };
 
-  const runExplain = (generate: () => Promise<string>) => {
+  const runExplain = (generate: () => Promise<AiResult<string>>) => {
     return run('explanation', async () => {
       explainDrafts.keep(explain, false);
-      const text = (await generate()).trim();
+      const text = unwrap(await generate()).trim();
       explainDrafts.keep(text, true);
       setStreaming(true);
       typeExplain(text, () => setStreaming(false));
@@ -313,7 +320,7 @@ export const DsaQuestionModal = ({
   const formatDescription = () => {
     return run('description', async () => {
       descDrafts.keep(problem, false);
-      const text = (
+      const text = unwrap(
         await formatAnswer({
           text: problem,
           question: title,
@@ -321,7 +328,7 @@ export const DsaQuestionModal = ({
           isDescription: true,
           instructions: descInstructions,
           model: getSavedModel(),
-        })
+        }),
       ).trim();
       setProblem(text);
       descDrafts.keep(text, true);
@@ -338,7 +345,9 @@ export const DsaQuestionModal = ({
     hasValue: boolean,
     also: DsaField[] = [],
   ) => {
-    const what = also.length ? `this field and the ${also.join(', ')}` : 'this field';
+    const what = also.length
+      ? `this field and the ${also.join(', ')}`
+      : 'this field';
     return (
       <GenerateButton
         loading={busy === field}
@@ -421,7 +430,9 @@ export const DsaQuestionModal = ({
                   Fill the form from the question header
                 </span>
                 <span className="aq-impl-toggle-sub">
-                  {bulkFields.includes('subtopic') ? 'Subtopic, description' : 'Description'}
+                  {bulkFields.includes('subtopic')
+                    ? 'Subtopic, description'
+                    : 'Description'}
                   , prerequisites, solution, output, explanation and difficulty
                   — one request.
                 </span>
@@ -639,10 +650,7 @@ export const DsaQuestionModal = ({
               </label>
               {fieldButton('prerequisites', !!prerequisites.trim())}
             </div>
-            <PrereqChips
-              value={prerequisites}
-              onChange={setPrerequisites}
-            />
+            <PrereqChips value={prerequisites} onChange={setPrerequisites} />
             {errorFor('prerequisites') && (
               <div className="aq-gen-error">{errorFor('prerequisites')}</div>
             )}
@@ -702,12 +710,12 @@ export const DsaQuestionModal = ({
                 }
                 onClick={() =>
                   run('output', async () => {
-                    const text = (
+                    const text = unwrap(
                       await generateCodeOutput({
                         code,
                         lang,
                         model: getSavedModel(),
-                      })
+                      }),
                     ).trim();
                     // `run` clears `busy` the moment this resolves, but the
                     // typewriter is still writing — without this the field

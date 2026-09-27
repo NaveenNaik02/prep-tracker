@@ -12,7 +12,7 @@ import { LanguageField } from './components/dsa/LanguageField';
 import { SolutionField } from './components/dsa/SolutionField';
 import { OutputField } from './components/dsa/OutputField';
 import { ExplanationField } from './components/dsa/ExplanationField';
-import { DifficultyField } from './components/dsa/DifficultyField';
+import { PriorityField } from './components/dsa/PriorityField';
 import { DsaFooter, SaveError } from './components/dsa/DsaFooter';
 import type { DsaQuestionModalProps } from './types';
 
@@ -70,7 +70,7 @@ export const DsaQuestionModal = ({
             <SolutionField />
             <OutputField />
             <ExplanationField />
-            <DifficultyField />
+            <PriorityField />
             <SaveError />
           </div>
 

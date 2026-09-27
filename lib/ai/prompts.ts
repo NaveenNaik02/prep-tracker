@@ -177,7 +177,6 @@ export const PROMPTS = {
         '"output": exactly what that program prints when run, line for line — just the printed text, no commentary and no repetition of the code.',
       explanation:
         '"explanation": Markdown. Name the algorithm or pattern and state its time and space complexity.',
-      difficulty: '"difficulty": exactly one of "easy", "medium", "hard".',
     };
     return [
       'You draft parts of a data-structures-and-algorithms interview question for a developer flashcard app, working from the problem title.',

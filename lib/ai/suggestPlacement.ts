@@ -1,6 +1,7 @@
 'use server';
 
 import { requireAuthor } from '@/lib/supabase/user';
+import { attempt, type AiResult } from './result';
 import { geminiJson } from './gemini';
 import { PROMPTS } from './prompts';
 
@@ -74,34 +75,36 @@ function buildTree(groups: SuggestPlacementGroup[]): string {
 
 export async function suggestPlacement(
   input: SuggestPlacementInput,
-): Promise<PlacementSuggestion> {
-  await requireAuthor('Sign in to use AI placement');
+): Promise<AiResult<PlacementSuggestion>> {
+  return attempt(async () => {
+    await requireAuthor('Sign in to use AI placement');
 
-  const title = input.title.trim();
-  if (title.length < 4) throw new Error('Write a question first');
+    const title = input.title.trim();
+    if (title.length < 4) throw new Error('Write a question first');
 
-  // Capped so a long problem statement can't crowd out the tree and the
-  // rejected list, which are what actually decide the placement.
-  const description = input.description?.trim().slice(0, 1200) ?? '';
+    // Capped so a long problem statement can't crowd out the tree and the
+    // rejected list, which are what actually decide the placement.
+    const description = input.description?.trim().slice(0, 1200) ?? '';
 
-  const parsed = await geminiJson({
-    system: PROMPTS.placement,
-    prompt:
-      `Existing curriculum:\n${buildTree(input.groups)}\n\nNew question: "${title}"` +
-      (input.tags?.trim() ? `\nTags: ${input.tags.trim()}` : '') +
-      (description ? `\nDescription: ${description}` : '') +
-      (input.rejected?.length
-        ? `\n\nRejected:\n${input.rejected.map((r) => `- ${describe(r)}`).join('\n')}`
-        : ''),
-    model: input.model,
-    // Low thinking force-fits the nearest existing subtopic instead of
-    // proposing a new one — the only call here worth the extra tokens.
-    thinkingLevel: 'high',
-    failure: 'Could not get a placement suggestion — try again.',
-    parseFailure: 'Could not read the placement suggestion — try again.',
+    const parsed = await geminiJson({
+      system: PROMPTS.placement,
+      prompt:
+        `Existing curriculum:\n${buildTree(input.groups)}\n\nNew question: "${title}"` +
+        (input.tags?.trim() ? `\nTags: ${input.tags.trim()}` : '') +
+        (description ? `\nDescription: ${description}` : '') +
+        (input.rejected?.length
+          ? `\n\nRejected:\n${input.rejected.map((r) => `- ${describe(r)}`).join('\n')}`
+          : ''),
+      model: input.model,
+      // Low thinking force-fits the nearest existing subtopic instead of
+      // proposing a new one — the only call here worth the extra tokens.
+      thinkingLevel: 'high',
+      failure: 'Could not get a placement suggestion — try again.',
+      parseFailure: 'Could not read the placement suggestion — try again.',
+    });
+
+    return validate(parsed, input.groups);
   });
-
-  return validate(parsed, input.groups);
 }
 
 // The model only ever sees identifiers we handed it, but it can still

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Sparkles } from 'lucide-react';
 import { useTypewriter } from '@/lib/hooks';
 import { generateTopicBlurb } from '@/lib/ai/generateBlurb';
+import { unwrap } from '@/lib/ai/result';
 
 interface Props {
   title: string;
@@ -40,7 +41,7 @@ export const RenameDialog = ({
     if (!canGenerateBlurb) return;
     setBlurbGen('loading');
     try {
-      typewriteBlurb(await generateTopicBlurb(name));
+      typewriteBlurb(unwrap(await generateTopicBlurb(name)));
       setBlurbGen('idle');
     } catch {
       setBlurbGen('error');
@@ -134,7 +135,9 @@ export const RenameDialog = ({
               autoComplete="off"
             />
             {blurbGen === 'error' && (
-              <p className="confirm-error">Couldn&apos;t generate — try again.</p>
+              <p className="confirm-error">
+                Couldn&apos;t generate — try again.
+              </p>
             )}
           </div>
         )}
@@ -143,7 +146,11 @@ export const RenameDialog = ({
           <button className="btn btn-ghost" onClick={onClose}>
             Cancel
           </button>
-          <button className="btn btn-primary" onClick={submit} disabled={!canSave}>
+          <button
+            className="btn btn-primary"
+            onClick={submit}
+            disabled={!canSave}
+          >
             {saving ? 'Saving…' : 'Save'}
           </button>
         </div>

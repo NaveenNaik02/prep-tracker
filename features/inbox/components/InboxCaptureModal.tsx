@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { X, Inbox, Loader2, Sparkles } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
 import { useAppStore } from '@/lib/stores/appStore';
+import { unwrap } from '@/lib/ai/result';
 import { addInboxItem, addInboxItems, splitInboxText } from '../actions';
 
 interface Props {
@@ -71,7 +72,7 @@ export default function InboxCaptureModal({ onClose, onSaved }: Props) {
     setAiState('loading');
     setAiError(null);
     try {
-      const qs = await splitInboxText(text);
+      const qs = unwrap(await splitInboxText(text));
       setDetected(qs);
       setAiState('done');
     } catch (err) {

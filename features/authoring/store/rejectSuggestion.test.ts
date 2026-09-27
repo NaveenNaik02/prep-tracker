@@ -13,6 +13,8 @@ vi.mock('@/lib/actions/topics', () => ({
   addSection: vi.fn(),
 }));
 
+const ok = <T>(data: T) => ({ ok: true, data });
+
 const { createAuthoringStore } = await import('./authoringStore');
 
 const GROUPS = [
@@ -51,7 +53,7 @@ const makeStore = () => {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  suggestPlacement.mockResolvedValue(closures);
+  suggestPlacement.mockResolvedValue(ok(closures));
 });
 
 describe('rejectSuggestion', () => {
@@ -62,11 +64,11 @@ describe('rejectSuggestion', () => {
     await store.getState().suggestPlacement();
     expect(suggestPlacement.mock.calls[0][0].rejected).toEqual([]);
 
-    suggestPlacement.mockResolvedValue(scope);
+    suggestPlacement.mockResolvedValue(ok(scope));
     await store.getState().rejectSuggestion();
     expect(suggestPlacement.mock.calls[1][0].rejected).toEqual([closures]);
 
-    suggestPlacement.mockResolvedValue({ ...closures, file: 'other' });
+    suggestPlacement.mockResolvedValue(ok({ ...closures, file: 'other' }));
     await store.getState().rejectSuggestion();
     expect(suggestPlacement.mock.calls[2][0].rejected).toEqual([
       closures,
@@ -99,7 +101,7 @@ describe('rejectSuggestion', () => {
     store.getState().setTitle('What is a closure?');
 
     await store.getState().suggestPlacement();
-    suggestPlacement.mockResolvedValue(scope);
+    suggestPlacement.mockResolvedValue(ok(scope));
     await store.getState().rejectSuggestion();
     expect(store.getState().suggestion).toEqual(scope);
     expect(suggestPlacement).toHaveBeenCalledTimes(2);

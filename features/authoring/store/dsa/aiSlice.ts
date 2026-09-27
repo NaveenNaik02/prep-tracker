@@ -1,6 +1,7 @@
 import type { StateCreator } from 'zustand';
 import { getSavedModel } from '@/lib/ai/models';
 import { generateDsaQuestion } from '@/lib/ai/generateDsaQuestion';
+import { unwrap } from '@/lib/ai/result';
 import { placementOf } from './placementSlice';
 import type { AiSlice, DsaState } from './types';
 
@@ -54,18 +55,20 @@ export const createAiSlice: StateCreator<DsaState, [], [], AiSlice> = (
     const { label, choices } = placementOf(s);
     return s.run(key, async () => {
       get().applyDraft(
-        await generateDsaQuestion({
-          // A field being regenerated is never sent back as its own context —
-          // the model would just echo it.
-          title: fields.includes('title') ? '' : s.title,
-          lang: s.lang,
-          subtopic: fields.includes('subtopic') ? undefined : label,
-          subtopics: choices.map((c) => c.label),
-          description: fields.includes('description') ? undefined : s.problem,
-          code: fields.includes('code') ? undefined : s.code,
-          fields,
-          model: getSavedModel(),
-        }),
+        unwrap(
+          await generateDsaQuestion({
+            // A field being regenerated is never sent back as its own context —
+            // the model would just echo it.
+            title: fields.includes('title') ? '' : s.title,
+            lang: s.lang,
+            subtopic: fields.includes('subtopic') ? undefined : label,
+            subtopics: choices.map((c) => c.label),
+            description: fields.includes('description') ? undefined : s.problem,
+            code: fields.includes('code') ? undefined : s.code,
+            fields,
+            model: getSavedModel(),
+          }),
+        ),
       );
     });
   },

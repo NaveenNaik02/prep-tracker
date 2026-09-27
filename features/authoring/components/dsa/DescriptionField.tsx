@@ -5,6 +5,7 @@ import MarkdownField from '@/components/MarkdownField';
 import { getSavedModel } from '@/lib/ai/models';
 import { getDescriptionInstructionText } from '@/lib/instructionPresets';
 import { formatAnswer } from '@/lib/ai/formatAnswer';
+import { unwrap } from '@/lib/ai/result';
 import { DraftChips } from '../DraftChips';
 import { FieldGenerateButton } from './FieldGenerateButton';
 import { FormatButton } from './FormatButton';
@@ -42,7 +43,7 @@ export const DescriptionField = () => {
     const { run, title, lang, setProblem, keepDraft } = store.getState();
     return run('description', async () => {
       keepDraft('descDrafts', problem, false);
-      const text = (
+      const text = unwrap(
         await formatAnswer({
           text: problem,
           question: title,
@@ -50,7 +51,7 @@ export const DescriptionField = () => {
           isDescription: true,
           instructions,
           model: getSavedModel(),
-        })
+        }),
       ).trim();
       setProblem(text);
       keepDraft('descDrafts', text, true);

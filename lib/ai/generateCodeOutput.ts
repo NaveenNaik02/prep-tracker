@@ -2,6 +2,7 @@
 
 import { requireAuthor } from '@/lib/supabase/user';
 import { gemini } from './gemini';
+import { attempt, type AiResult } from './result';
 import { PROMPTS } from './prompts';
 
 export interface CodeGenerationInput {
@@ -25,17 +26,19 @@ async function run(
   system: string,
   contextBits: string[],
   failure: string,
-): Promise<string> {
-  await requireAuthor('Sign in to use AI generation');
+): Promise<AiResult<string>> {
+  return attempt(async () => {
+    await requireAuthor('Sign in to use AI generation');
 
-  const code = input.code.trim();
-  if (code.length < 4) throw new Error('Code snippet is too short');
+    const code = input.code.trim();
+    if (code.length < 4) throw new Error('Code snippet is too short');
 
-  return gemini({
-    system,
-    prompt: `${contextBits.filter(Boolean).join('\n')}\n\nCode:\n${code}`,
-    model: input.model,
-    failure,
+    return gemini({
+      system,
+      prompt: `${contextBits.filter(Boolean).join('\n')}\n\nCode:\n${code}`,
+      model: input.model,
+      failure,
+    });
   });
 }
 
@@ -45,7 +48,7 @@ const langLine = (lang?: string) => {
 
 export async function generateCodeOutput(
   input: CodeGenerationInput,
-): Promise<string> {
+): Promise<AiResult<string>> {
   return run(
     input,
     PROMPTS.codeOutput,
@@ -56,7 +59,7 @@ export async function generateCodeOutput(
 
 export async function generateCodeExplanation(
   input: CodeGenerationInput,
-): Promise<string> {
+): Promise<AiResult<string>> {
   return run(
     input,
     PROMPTS.codeExplanation(input),
@@ -72,7 +75,7 @@ export async function generateCodeExplanation(
 
 export async function generateDsaExplanation(
   input: CodeGenerationInput,
-): Promise<string> {
+): Promise<AiResult<string>> {
   return run(
     input,
     PROMPTS.dsaExplanation(input),

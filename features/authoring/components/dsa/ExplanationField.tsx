@@ -8,6 +8,7 @@ import { getSavedModel } from '@/lib/ai/models';
 import { getCodeExplanationInstructionText } from '@/lib/instructionPresets';
 import { formatAnswer } from '@/lib/ai/formatAnswer';
 import { generateDsaExplanation } from '@/lib/ai/generateCodeOutput';
+import { unwrap, type AiResult } from '@/lib/ai/result';
 import { DraftChips } from '../DraftChips';
 import { FormatButton } from './FormatButton';
 import { FormField } from './FormField';
@@ -41,11 +42,11 @@ export const ExplanationField = () => {
 
   // Both Format and Generate replace the text, so the old one is parked as a
   // draft first and the new one typed in.
-  const runExplain = (generate: () => Promise<string>) => {
+  const runExplain = (generate: () => Promise<AiResult<string>>) => {
     const { run, keepDraft, setStreaming } = store.getState();
     return run('explanation', async () => {
       keepDraft('explainDrafts', explain, false);
-      const text = (await generate()).trim();
+      const text = unwrap(await generate()).trim();
       keepDraft('explainDrafts', text, true);
       setStreaming(true);
       typeExplain(text, () => setStreaming(false));

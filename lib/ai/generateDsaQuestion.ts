@@ -2,6 +2,7 @@
 
 import { requireAuthor } from '@/lib/supabase/user';
 import type { PriorityLevel } from '@/lib/types';
+import { attempt, type AiResult } from './result';
 import { geminiJson } from './gemini';
 import { PROMPTS } from './prompts';
 import { BULK_FIELDS, type DsaDraft, type DsaField } from './dsaFields';
@@ -65,39 +66,41 @@ function readDraft(parsed: unknown, fields: readonly DsaField[]): DsaDraft {
 // or a single field being regenerated.
 export async function generateDsaQuestion(
   input: GenerateDsaInput,
-): Promise<DsaDraft> {
-  await requireAuthor('Sign in to use AI generation');
+): Promise<AiResult<DsaDraft>> {
+  return attempt(async () => {
+    await requireAuthor('Sign in to use AI generation');
 
-  const title = input.title.trim();
-  const fields = input.fields?.length ? input.fields : BULK_FIELDS;
-  // Every field but the title is generated *from* the title, so only they
-  // require one to exist.
-  if (!fields.includes('title') && title.length < 4) {
-    throw new Error('Add a question header first');
-  }
+    const title = input.title.trim();
+    const fields = input.fields?.length ? input.fields : BULK_FIELDS;
+    // Every field but the title is generated *from* the title, so only they
+    // require one to exist.
+    if (!fields.includes('title') && title.length < 4) {
+      throw new Error('Add a question header first');
+    }
 
-  const context = [
-    title ? `Problem: ${title}` : '',
-    input.subtopic?.trim() ? `Subtopic: ${input.subtopic.trim()}` : '',
-    input.subtopics?.length
-      ? `Existing subtopics: ${input.subtopics.join(', ')}`
-      : '',
-    input.lang && input.lang !== 'none' ? `Language: ${input.lang}` : '',
-    input.description?.trim()
-      ? `Existing description: ${input.description.trim()}`
-      : '',
-    input.code?.trim() ? `Existing solution:\n${input.code.trim()}` : '',
-  ]
-    .filter(Boolean)
-    .join('\n');
+    const context = [
+      title ? `Problem: ${title}` : '',
+      input.subtopic?.trim() ? `Subtopic: ${input.subtopic.trim()}` : '',
+      input.subtopics?.length
+        ? `Existing subtopics: ${input.subtopics.join(', ')}`
+        : '',
+      input.lang && input.lang !== 'none' ? `Language: ${input.lang}` : '',
+      input.description?.trim()
+        ? `Existing description: ${input.description.trim()}`
+        : '',
+      input.code?.trim() ? `Existing solution:\n${input.code.trim()}` : '',
+    ]
+      .filter(Boolean)
+      .join('\n');
 
-  const parsed = await geminiJson({
-    system: PROMPTS.dsaQuestion(fields),
-    prompt: context,
-    model: input.model,
-    failure: 'Could not generate — try again.',
-    parseFailure: 'Could not read the generated question — try again.',
+    const parsed = await geminiJson({
+      system: PROMPTS.dsaQuestion(fields),
+      prompt: context,
+      model: input.model,
+      failure: 'Could not generate — try again.',
+      parseFailure: 'Could not read the generated question — try again.',
+    });
+
+    return readDraft(parsed, fields);
   });
-
-  return readDraft(parsed, fields);
 }

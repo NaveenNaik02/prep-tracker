@@ -9,6 +9,7 @@ import {
 } from '@/lib/content/topics';
 import { addSection } from '@/lib/actions/topics';
 import { suggestPlacement } from '@/lib/ai/suggestPlacement';
+import { unwrap } from '@/lib/ai/result';
 import { matchSubtopic } from '../../utils/matchSubtopic';
 import type { DsaInit, DsaState, PlacementSlice } from './types';
 
@@ -95,25 +96,27 @@ export const createPlacementSlice = (
         const { group, choices } = placementOf(s);
         if (!group) return;
         await s.run('section', async () => {
-          const next = await suggestPlacement({
-            title: s.title.trim(),
-            tags: s.prerequisites.trim(),
-            description: s.problem.trim(),
-            groups: [
-              {
-                groupSlug: group.slug,
-                groupName: group.groupName,
-                sections: choices.map((c) => ({
-                  topic: c.topic,
-                  file: c.file,
-                  label: c.label,
-                })),
-              },
-            ],
-            // A re-run is told to avoid everything already offered.
-            rejected: s.history,
-            model: getSavedModel(),
-          });
+          const next = unwrap(
+            await suggestPlacement({
+              title: s.title.trim(),
+              tags: s.prerequisites.trim(),
+              description: s.problem.trim(),
+              groups: [
+                {
+                  groupSlug: group.slug,
+                  groupName: group.groupName,
+                  sections: choices.map((c) => ({
+                    topic: c.topic,
+                    file: c.file,
+                    label: c.label,
+                  })),
+                },
+              ],
+              // A re-run is told to avoid everything already offered.
+              rejected: s.history,
+              model: getSavedModel(),
+            }),
+          );
           const history = [...get().history, next];
           set({ history, at: history.length - 1 });
         });

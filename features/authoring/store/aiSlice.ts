@@ -10,6 +10,7 @@ import {
   getProblemInstructionText,
 } from '@/lib/instructionPresets';
 import { AUTO_RUN_MODEL } from '@/lib/ai/models';
+import { unwrap } from '@/lib/ai/result';
 import { PENDING_GROUP_SLUG, PENDING_SECTION_KEY } from '../types';
 import { selectPlacement } from './placementSlice';
 import type { AiSlice, AuthoringState } from './types';
@@ -53,16 +54,18 @@ export const createAiSlice: StateCreator<AuthoringState, [], [], AiSlice> = (
       try {
         stream(
           'title',
-          await generateQuestion({
-            topicName: activeTopicName,
-            subName: activeSectionLabel,
-            seed: s.title,
-            isImpl: s.isImpl,
-            lang: s.lang,
-            tags: s.tags,
-            model: modelFor(s),
-            instructions: getSuggestionInstructionText(),
-          }),
+          unwrap(
+            await generateQuestion({
+              topicName: activeTopicName,
+              subName: activeSectionLabel,
+              seed: s.title,
+              isImpl: s.isImpl,
+              lang: s.lang,
+              tags: s.tags,
+              model: modelFor(s),
+              instructions: getSuggestionInstructionText(),
+            }),
+          ),
         );
       } catch {
         set({ questionState: 'error' });
@@ -75,13 +78,15 @@ export const createAiSlice: StateCreator<AuthoringState, [], [], AiSlice> = (
       try {
         stream(
           'problem',
-          await generateProblem({
-            question: s.title,
-            lang: s.lang,
-            tags: s.tags,
-            model: modelFor(s),
-            instructions: getProblemInstructionText(),
-          }),
+          unwrap(
+            await generateProblem({
+              question: s.title,
+              lang: s.lang,
+              tags: s.tags,
+              model: modelFor(s),
+              instructions: getProblemInstructionText(),
+            }),
+          ),
         );
       } catch {
         set({ problemState: 'error' });
@@ -99,14 +104,16 @@ export const createAiSlice: StateCreator<AuthoringState, [], [], AiSlice> = (
       try {
         stream(
           'markdown',
-          await generateAnswer({
-            question: s.title,
-            topicName: activeTopicName,
-            subName: activeSectionLabel,
-            instructions: s.instructions,
-            wantCodeExample: !s.isImpl && s.wantCodeExample,
-            model: modelFor(s),
-          }),
+          unwrap(
+            await generateAnswer({
+              question: s.title,
+              topicName: activeTopicName,
+              subName: activeSectionLabel,
+              instructions: s.instructions,
+              wantCodeExample: !s.isImpl && s.wantCodeExample,
+              model: modelFor(s),
+            }),
+          ),
         );
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -124,15 +131,17 @@ export const createAiSlice: StateCreator<AuthoringState, [], [], AiSlice> = (
       try {
         stream(
           'markdown',
-          await formatAnswer({
-            text: s.markdown,
-            question: s.title,
-            instructions: s.instructions,
-            wantCodeExample: !s.isImpl && s.wantCodeExample,
-            isImpl: s.isImpl,
-            lang: s.lang,
-            model: modelFor(s),
-          }),
+          unwrap(
+            await formatAnswer({
+              text: s.markdown,
+              question: s.title,
+              instructions: s.instructions,
+              wantCodeExample: !s.isImpl && s.wantCodeExample,
+              isImpl: s.isImpl,
+              lang: s.lang,
+              model: modelFor(s),
+            }),
+          ),
         );
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -150,13 +159,15 @@ export const createAiSlice: StateCreator<AuthoringState, [], [], AiSlice> = (
       set({ dupState: 'loading', dupResult: null });
       try {
         set({
-          dupResult: await checkDuplicateQuestion({
-            title: s.title,
-            topic: section.topic,
-            file: section.file,
-            excludeId: s.excludeQuestionId,
-            model: modelFor(s),
-          }),
+          dupResult: unwrap(
+            await checkDuplicateQuestion({
+              title: s.title,
+              topic: section.topic,
+              file: section.file,
+              excludeId: s.excludeQuestionId,
+              model: modelFor(s),
+            }),
+          ),
           dupState: 'done',
         });
       } catch {
@@ -172,17 +183,19 @@ export const createAiSlice: StateCreator<AuthoringState, [], [], AiSlice> = (
       const s = get();
       set({ suggestState: 'loading', suggestion: null });
       try {
-        const next = await suggestPlacement({
-          title: s.title,
-          tags: s.tags,
-          groups: s.groups.map((g) => ({
-            groupSlug: g.slug,
-            groupName: g.groupName,
-            sections: g.sections,
-          })),
-          rejected: s.history,
-          model: modelFor(s),
-        });
+        const next = unwrap(
+          await suggestPlacement({
+            title: s.title,
+            tags: s.tags,
+            groups: s.groups.map((g) => ({
+              groupSlug: g.slug,
+              groupName: g.groupName,
+              sections: g.sections,
+            })),
+            rejected: s.history,
+            model: modelFor(s),
+          }),
+        );
         const history = [...get().history, next];
         set({
           suggestion: next,

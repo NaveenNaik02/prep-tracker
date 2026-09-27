@@ -4,6 +4,7 @@ import { GenerateButton } from '@/components/GenerateButton';
 import { useTypewriter } from '@/lib/hooks';
 import { getSavedModel } from '@/lib/ai/models';
 import { generateCodeOutput } from '@/lib/ai/generateCodeOutput';
+import { unwrap } from '@/lib/ai/result';
 import { FormField } from './FormField';
 import {
   selectAnyBusy,
@@ -29,8 +30,8 @@ export const OutputField = () => {
   const generate = () => {
     const { run, code, lang, setStreaming } = store.getState();
     return run('output', async () => {
-      const text = (
-        await generateCodeOutput({ code, lang, model: getSavedModel() })
+      const text = unwrap(
+        await generateCodeOutput({ code, lang, model: getSavedModel() }),
       ).trim();
       // `run` clears `busy` the moment this resolves, but the typewriter is
       // still writing — without this the field unlocks mid-stream and a

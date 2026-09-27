@@ -12,6 +12,8 @@ vi.mock('@/lib/actions/questions', () => ({
   updateQuestion: vi.fn(),
 }));
 
+const ok = <T>(data: T) => ({ ok: true, data });
+
 const { createDsaStore } = await import('./dsaStore');
 const { STAGED } = await import('./placementSlice');
 
@@ -53,8 +55,8 @@ beforeEach(() => {
 describe('placement suggestions', () => {
   it('walks back and forward through history, calling only for new ones', async () => {
     suggestPlacement
-      .mockResolvedValueOnce(arrays)
-      .mockResolvedValueOnce(graphs);
+      .mockResolvedValueOnce(ok(arrays))
+      .mockResolvedValueOnce(ok(graphs));
     const store = makeStore();
 
     await store.getState().suggest();
@@ -73,7 +75,7 @@ describe('placement suggestions', () => {
   });
 
   it('accepting applies the placement and clears the history', async () => {
-    suggestPlacement.mockResolvedValueOnce(graphs);
+    suggestPlacement.mockResolvedValueOnce(ok(graphs));
     const store = makeStore();
 
     await store.getState().suggest();

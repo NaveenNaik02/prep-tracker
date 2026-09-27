@@ -3,6 +3,7 @@
 import { Sparkles } from 'lucide-react';
 import AqSelect from '@/components/AqSelect';
 import { useAuthoring, usePlacementView } from '../store/authoringStore';
+import { SuggestionCard } from './SuggestionCard';
 
 // Topic/subtopic pickers plus the "Suggest placement" flow. The suggestion
 // card previews where the AI wants the question to go — including topics or
@@ -90,10 +91,9 @@ export const PlacementPicker = () => {
       </div>
 
       {suggestion && (
-        <div className="aq-suggest-card">
-          <div className="aq-suggest-path">
-            <Sparkles size={13} />
-            <span>
+        <SuggestionCard
+          path={
+            <>
               {suggestion.mode === 'existing' && (
                 <>
                   <b>{groupName(suggestion.groupSlug)}</b>
@@ -129,33 +129,16 @@ export const PlacementPicker = () => {
                   <span className="aq-suggest-badge">new subtopic</span>
                 </>
               )}
-            </span>
-          </div>
-          {suggestion.reasoning && (
-            <p className="aq-suggest-reason">{suggestion.reasoning}</p>
-          )}
-          {history.length > 1 && (
-            <p className="aq-suggest-reason">
-              Suggestion {at + 1} of {history.length}
-            </p>
-          )}
-          <div className="aq-suggest-actions">
-            <button type="button" className="btn-cancel" onClick={dismiss}>
-              Choose manually
-            </button>
-            {at > 0 && (
-              <button type="button" className="btn-cancel" onClick={back}>
-                Back
-              </button>
-            )}
-            <button type="button" className="btn-cancel" onClick={reject}>
-              Not this one
-            </button>
-            <button type="button" className="btn-primary" onClick={accept}>
-              Use this placement
-            </button>
-          </div>
-        </div>
+            </>
+          }
+          reasoning={suggestion.reasoning}
+          at={at}
+          total={history.length}
+          onDismiss={dismiss}
+          onBack={back}
+          onReject={reject}
+          onAccept={accept}
+        />
       )}
     </>
   );

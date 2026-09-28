@@ -1,7 +1,6 @@
 'use server';
 
 import { requireAuthor } from '@/lib/supabase/user';
-import type { PriorityLevel } from '@/lib/types';
 import { attempt, type AiResult } from './result';
 import { geminiJson } from './gemini';
 import { PROMPTS } from './prompts';
@@ -23,14 +22,8 @@ export interface GenerateDsaInput {
   model?: string;
 }
 
-const DIFFICULTY: Record<string, PriorityLevel> = {
-  easy: 'low',
-  medium: 'med',
-  hard: 'high',
-};
-
-// The model is told which keys to send, but it can still omit one, send an
-// array where a string was asked for, or invent a difficulty — so read only
+// The model is told which keys to send, but it can still omit one or send an
+// array where a string was asked for — so read only
 // the requested keys and only in the shapes the form can use.
 function readDraft(parsed: unknown, fields: readonly DsaField[]): DsaDraft {
   if (!parsed || typeof parsed !== 'object') {
@@ -52,9 +45,6 @@ function readDraft(parsed: unknown, fields: readonly DsaField[]): DsaDraft {
   for (const field of fields) {
     if (field === 'prerequisites') {
       draft[field] = list(raw[field]);
-    } else if (field === 'difficulty') {
-      const level = text(raw.difficulty)?.toLowerCase() ?? '';
-      draft.difficulty = DIFFICULTY[level];
     } else {
       draft[field] = text(raw[field]);
     }

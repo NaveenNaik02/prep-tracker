@@ -42,7 +42,6 @@ export const createAiSlice: StateCreator<DsaState, [], [], AiSlice> = (
     if (d.prerequisites) s.setPrerequisites(d.prerequisites);
     if (d.code) s.setCode(d.code);
     if (d.output) s.setOutput(d.output);
-    if (d.difficulty) s.setPriority(d.difficulty);
     if (d.explanation) {
       s.keepDraft('explainDrafts', s.explain, false);
       s.setExplain(d.explanation);

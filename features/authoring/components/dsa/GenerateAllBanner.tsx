@@ -28,7 +28,7 @@ export const GenerateAllBanner = () => {
             Fill the form from the question header
           </span>
           <span className="aq-impl-toggle-sub">
-            {lead}, prerequisites, solution, output, explanation and difficulty
+            {lead}, prerequisites, solution, output and explanation
             — one request.
           </span>
         </div>

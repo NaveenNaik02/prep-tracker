@@ -1,5 +1,3 @@
-import type { PriorityLevel } from '@/lib/types';
-
 // Split from generateDsaQuestion.ts because that file is 'use server' and may
 // only export async functions — same reason models.ts exists separately.
 
@@ -13,7 +11,6 @@ export const BULK_FIELDS = [
   'code',
   'output',
   'explanation',
-  'difficulty',
 ] as const;
 
 export type DsaField = (typeof BULK_FIELDS)[number] | 'title' | 'subtopic';
@@ -29,5 +26,4 @@ export interface DsaDraft {
   code?: string;
   output?: string;
   explanation?: string;
-  difficulty?: PriorityLevel;
 }

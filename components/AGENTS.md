@@ -1,6 +1,6 @@
 # AGENTS.md — components/
 
-Scoped conventions for everything under `components/`. See the root `web/AGENTS.md` for architecture, state management, auth, and feature-specific notes.
+Scoped conventions for everything under `components/`. See the root `AGENTS.md` for repo-wide rules and the index of other scoped guides.
 
 ## UI primitives
 
@@ -28,3 +28,10 @@ Within the feature folder, still split into standalone components/hooks per the 
 When a component does grow siblings, colocate them in a folder (`SomeModal/index.tsx`, `MarkdownEditor.tsx`, `AiToolbar.tsx`) instead of scattering flat files across `components/`.
 
 **Root-level `components/` must stay feature-independent.** Anything living directly under `components/` (not inside a feature folder) may not import from a specific feature's `actions`/`lib` — that's a feature reaching into another feature through a shared component, defeating the point of feature-first segregation. Instead the root component takes the feature-specific behavior (a server action, a callback, config) as a **prop**, and each feature passes its own in at the call site. Promote a component out of a feature folder to `components/` root only once a second feature needs the exact same UI/logic — don't pre-extract for a single caller. See `components/GoogleAuthButton.tsx` (takes an `action` prop typed to the state shape it needs, no import of any feature's actions) alongside `features/login/components/LoginForm.tsx` and `features/signup/components/SignupForm.tsx`, each passing in its own action (`loginWithGoogle` / `signUpWithGoogle`) — the second one re-exported from `features/signup/actions` rather than the component reaching across features itself.
+
+## Notes on specific components
+
+- **`QuestionItem/highlight.ts`** — Prism over the `<pre><code class="language-…">` DOM `marked` already produced, so no re-render. Lazy-loaded at call sites.
+- **FAB cluster** — `lib/hooks/useFabDrag.ts` has its own tiny Zustand store (the FABs render outside `DrawerProvider`/`SearchProvider`), so dragging one FAB moves the whole cluster. Resets on route change.
+- **`MainContent.tsx`** — swaps in `<SearchResults>` once the search query hits 2 chars, and resets scroll manually on pathname change because Next's built-in reset doesn't fire here.
+- **`ShortlistPage.tsx`** — one page for both `/starred` and `/grey-zone` (takes the flag + copy); drills into a topic via `?topic=<slug>` so it stays a server component.
